@@ -1,0 +1,27 @@
+--extra-index-url https://download.pytorch.org/whl/cpu
+torch>=2.10.0
+torchvision>=0.20.0
+
+opencv-python>=4.10.0
+mediapipe>=0.10.30
+numpy>=1.26.4
+librosa>=0.10.2
+praat-parselmouth>=0.4.3
+openai-whisper>=20231117
+nltk>=3.8.1
+speechbrain>=1.0.0
+open-clip-torch>=2.24.0
+sentence-transformers>=2.7.0
+ultralytics>=8.2.0
+pytrends>=4.9.2
+pytz>=2024.1
+fastapi>=0.111.0
+uvicorn[standard]>=0.29.0
+python-multipart>=0.0.9
+moviepy>=1.0.3
+scipy>=1.13.0
+pandas>=2.2.2
+scikit-learn>=1.4.2
+transformers>=4.41.0
+google-api-python-client>=2.131.0
+yt-dlp>=2024.5.27
