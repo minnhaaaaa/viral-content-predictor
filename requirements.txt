@@ -25,3 +25,4 @@ scikit-learn>=1.4.2
 transformers>=4.41.0
 google-api-python-client>=2.131.0
 yt-dlp>=2024.5.27
+pytest>=8.0.0
