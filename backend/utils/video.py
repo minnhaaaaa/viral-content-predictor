@@ -1,7 +1,7 @@
 import cv2
 import numpy as np
 import os
-import moviepy.editor as mp
+from moviepy import VideoFileClip
 
 def extract_frames(video_path: str, sample_rate: float = 4.0):
     " Returns a list of (timestamp, frame) tuples."
@@ -28,13 +28,14 @@ def extract_frames(video_path: str, sample_rate: float = 4.0):
 def extract_audio(video_path: str, output_path: str = "temp_audio.wav"):
     "Returns the path to the extracted audio WAV file."
 
-    video = mp.VideoFileClip(video_path)
-    video.audio.write_audiofile(output_path, verbose=False, logger=None)
+    video = VideoFileClip(video_path)
+    video.audio.write_audiofile(output_path, logger=None)
+    video.close()
     return output_path
 
 def get_video_metadata(video_path: str):
     "Returns basic metadata about the video."
-    
+
     cap = cv2.VideoCapture(video_path)
     fps = cap.get(cv2.CAP_PROP_FPS)
     frame_count = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
