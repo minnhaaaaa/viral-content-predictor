@@ -25,3 +25,33 @@ def frame_saliency_score(frames):
         normalized = np.zeros_like(raw_scores)
 
     return normalized.tolist()
+
+import cv2
+import numpy as np
+
+def luminance_shock_score(frames):
+    """
+    Returns a list of luminance shock scores, one per sampled frame, scaled 0-100
+    """
+    raw_scores = [0.0]
+    prev_hist = None
+
+    for timestamp, frame in frames:
+        gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+        hist = cv2.calcHist([gray], [0], None, [256], [0, 256])
+        hist = cv2.normalize(hist, hist).flatten()
+
+        if prev_hist is not None:
+            diff = np.sum(np.abs(hist - prev_hist))
+            raw_scores.append(diff)
+
+        prev_hist = hist
+
+    raw_scores = np.array(raw_scores)
+    min_val, max_val = raw_scores.min(), raw_scores.max()
+    if max_val - min_val > 1e-6:
+        normalized = (raw_scores - min_val) / (max_val - min_val) * 100
+    else:
+        normalized = np.zeros_like(raw_scores)
+
+    return normalized.tolist()
