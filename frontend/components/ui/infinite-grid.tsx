@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useRef } from "react";
+import React, { useRef, useId } from "react"; // 👈 Imported useId
 import {
   motion,
   useMotionValue,
@@ -11,6 +11,8 @@ import { cn } from "@/lib/utils";
 
 export const InfiniteGrid = ({ className }: { className?: string }) => {
   const containerRef = useRef<HTMLDivElement>(null);
+  const baseId = useId(); 
+  const gridPatternId = `grid-pattern-${baseId}`; 
 
   const mouseX = useMotionValue(-1000);
   const mouseY = useMotionValue(-1000);
@@ -42,14 +44,15 @@ export const InfiniteGrid = ({ className }: { className?: string }) => {
         className
       )}
     >
+      {/* patternId prop to pass down the unique identifier */}
       <div className="absolute inset-0 opacity-[0.045] text-primary">
-        <GridPattern offsetX={gridOffsetX} offsetY={gridOffsetY} />
+        <GridPattern offsetX={gridOffsetX} offsetY={gridOffsetY} patternId={gridPatternId} />
       </div>
       <motion.div
         className="absolute inset-0 opacity-40 text-primary"
         style={{ maskImage, WebkitMaskImage: maskImage }}
       >
-        <GridPattern offsetX={gridOffsetX} offsetY={gridOffsetY} />
+        <GridPattern offsetX={gridOffsetX} offsetY={gridOffsetY} patternId={gridPatternId} />
       </motion.div>
 
       {/* ambient glow */}
@@ -67,15 +70,17 @@ export const InfiniteGrid = ({ className }: { className?: string }) => {
 const GridPattern = ({
   offsetX,
   offsetY,
+  patternId, 
 }: {
   offsetX: any;
   offsetY: any;
+  patternId: string;
 }) => {
   return (
     <svg className="w-full h-full">
       <defs>
         <motion.pattern
-          id="xenrex-grid-pattern"
+          id={patternId} 
           width="40"
           height="40"
           patternUnits="userSpaceOnUse"
@@ -90,7 +95,7 @@ const GridPattern = ({
           />
         </motion.pattern>
       </defs>
-      <rect width="100%" height="100%" fill="url(#xenrex-grid-pattern)" />
+      <rect width="100%" height="100%" fill={`url(#${patternId})`} /> 
     </svg>
   );
 };
