@@ -63,10 +63,9 @@ export function FluidDropdown({
   const [isOpen, setIsOpen] = React.useState(false);
   const [hovered, setHovered] = React.useState<string | null>(null);
   const dropdownRef = React.useRef<HTMLDivElement>(null);
-
-  useClickAway(dropdownRef as React.RefObject<HTMLElement>, () =>
-    setIsOpen(false)
-  );
+  
+  const handleClickAway = React.useCallback(() => setIsOpen(false), []);
+  useClickAway(dropdownRef as React.RefObject<HTMLElement>, handleClickAway);
 
   const selectedOption = options.find((o) => o.id === value);
 
