@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useRef, useId } from "react"; // 👈 Imported useId
+import React, { useRef, useId } from "react";
 import {
   motion,
   useMotionValue,
@@ -12,7 +12,9 @@ import { cn } from "@/lib/utils";
 export const InfiniteGrid = ({ className }: { className?: string }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const baseId = useId(); 
-  const gridPatternId = `grid-pattern-${baseId}`; 
+  
+  const bgPatternId = `grid-pattern-bg-${baseId}`;
+  const fgPatternId = `grid-pattern-fg-${baseId}`;
 
   const mouseX = useMotionValue(-1000);
   const mouseY = useMotionValue(-1000);
@@ -44,15 +46,17 @@ export const InfiniteGrid = ({ className }: { className?: string }) => {
         className
       )}
     >
-      {/* patternId prop to pass down the unique identifier */}
+      {/*  Receives the background-specific id */}
       <div className="absolute inset-0 opacity-[0.045] text-primary">
-        <GridPattern offsetX={gridOffsetX} offsetY={gridOffsetY} patternId={gridPatternId} />
+        <GridPattern offsetX={gridOffsetX} offsetY={gridOffsetY} patternId={bgPatternId} />
       </div>
+      
+      {/*  Receives the foreground-specific id */}
       <motion.div
         className="absolute inset-0 opacity-40 text-primary"
         style={{ maskImage, WebkitMaskImage: maskImage }}
       >
-        <GridPattern offsetX={gridOffsetX} offsetY={gridOffsetY} patternId={gridPatternId} />
+        <GridPattern offsetX={gridOffsetX} offsetY={gridOffsetY} patternId={fgPatternId} />
       </motion.div>
 
       {/* ambient glow */}
