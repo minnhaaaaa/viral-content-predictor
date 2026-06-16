@@ -220,3 +220,47 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+# _____________________________________________FRONTEND____________________________________________________
+# Dependencies
+frontend/node_modules
+frontend/.pnpm-store
+
+# Next.js build output
+frontend/.next/
+frontend/out/
+
+# Production build logs and artifacts
+frontend/build/
+frontend/dist/
+.env.production
+
+# Local development environment variables 
+frontend/.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Vercel deployment configurations
+frontend/.vercel
+
+# Debugging and log files
+frontend/npm-debug.log*
+frontend/yarn-debug.log*
+frontend/yarn-error.log*
+frontend/pnpm-debug.log*
+frontend/lerna-debug.log*
+
+# System files
+frontend/.DS_Store
+frontend/*.local
+frontend/Thumds.db
+
+# TypeScript / IDE cache
+frontend/.eslintcache
+frontend/.tsbuildinfo
+frontend/.vscode/*
+!.vscode/extensions.json
+frontend/.idea/
+frontend/node_modules
