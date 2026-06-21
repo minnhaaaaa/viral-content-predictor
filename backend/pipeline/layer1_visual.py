@@ -11,7 +11,7 @@ def frame_saliency_score(frames):
     """
     if not frames:
         return []
-    raw_scores = [0.0]
+    raw_scores = []
 
     saliency_detector = cv2.saliency.StaticSaliencySpectralResidual_create()
 
@@ -39,6 +39,8 @@ def luminance_shock_score(frames):
     """
     Returns a list of luminance shock scores, one per sampled frame, scaled 0-100
     """
+    if not frames:
+        return []
     raw_scores = [0.0]
     prev_hist = None
 
@@ -63,7 +65,9 @@ def luminance_shock_score(frames):
     return normalized.tolist()
 
 def motion_energy_index(frames):
-    raw_scores = [0.0]  # first frame has no previous frame
+    if not frames:
+        return []
+    raw_scores = []  # first frame has no previous frame
     prev_gray = None
 
     for timestamp, frame in frames:
@@ -98,7 +102,7 @@ def motion_energy_index(frames):
 def colour_valence_index(frames):
     if not frames:
         return []
-    raw_scores = [0.0]    
+    raw_scores = []    
     
     for timestamp, frame in frames:
         hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
@@ -138,37 +142,35 @@ def get_face_app():
     return app
 
 def face_gaze_pull_score(frames):
+    if not frames:
+        return []
+
     face_app = get_face_app()
-    scores = []
+    raw_scores = []
 
     for timestamp, frame in frames:
         h, w = frame.shape[:2]
         faces = face_app.get(frame)
 
         if len(faces) == 0:
-            scores.append(0.0)
+            raw_scores.append(0.0)
             continue
 
-        # pick largest face
         face = max(
             faces,
             key=lambda f: (f.bbox[2] - f.bbox[0]) * (f.bbox[3] - f.bbox[1])
         )
 
         x1, y1, x2, y2 = face.bbox.astype(float)
-
-        # 1. face size score
         face_area = (x2 - x1) * (y2 - y1)
         frame_area = w * h
         face_size_score = min(face_area / (frame_area * 0.25), 1.0)
 
-        #2. centre score
         face_cx = (x1 + x2) / 2
         frame_cx = w / 2
         center_offset = abs(face_cx - frame_cx) / w
         center_score = max(0.0, 1.0 - 2.0 * center_offset)
 
-        # kps order: left_eye, right_eye, nose, mouth_left, mouth_right
         left_eye = face.kps[0]
         right_eye = face.kps[1]
         nose = face.kps[2]
@@ -176,7 +178,6 @@ def face_gaze_pull_score(frames):
         eye_dist = np.linalg.norm(right_eye - left_eye)
 
         if eye_dist > 1e-6:
-            # normalized horizontal nose deviation
             yaw_proxy = abs(nose[0] - eye_mid[0]) / eye_dist
             gaze_score = max(0.0, 1.0 - 2.2 * yaw_proxy)
         else:
@@ -187,24 +188,19 @@ def face_gaze_pull_score(frames):
             0.20 * center_score +
             0.30 * gaze_score
         )
+        raw_scores.append(score)
 
-        scores.append(score)
+    raw_scores = np.array(raw_scores)
+    if np.sum(raw_scores) == 0:
+        return [0.0] * len(frames)
 
-    scores = np.array(scores)
+    min_val, max_val = raw_scores.min(), raw_scores.max()
+    if max_val - min_val > 1e-6:
+        normalized = (raw_scores - min_val) / (max_val - min_val) * 100
+    else:
+        normalized = np.zeros_like(raw_scores)
 
-    if len(scores) == 0:
-        return []
-    
-    min_s, max_s = scores.min(), scores.max()
-    normalized = (scores - min_s) / (max_s - min_s + 1e-6)
-    normalized *= 100
-
-    if np.sum(scores) == 0:
-        return [0.0] * len(scores)
-
-    # logistic compression
-    scaled = 1 / (1 + np.exp(-8 * (scores - 0.3)))
-    return (scaled * 100).tolist()
+    return normalized.tolist()
 
 def aggregate_to_seconds(scores: list, sample_rate: float = 4.0) -> list:
     """
@@ -230,6 +226,9 @@ def analyse_visual(video_path: str) -> dict:
     colour_scores = colour_valence_index(frames)
     face_scores = face_gaze_pull_score(frames)
 
+    lengths = {k: len(v) for k, v in result.items()}
+    assert len(set(lengths.values())) == 1, f"Signal length mismatch: {lengths}"
+    
     return {
         "frame_saliency": aggregate_to_seconds(saliency_scores),
         "luminance_shock": aggregate_to_seconds(shock_scores),
