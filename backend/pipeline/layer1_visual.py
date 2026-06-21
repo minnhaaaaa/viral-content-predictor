@@ -134,7 +134,7 @@ def colour_valence_index(frames):
 @lru_cache(maxsize=1)
 def get_face_app():
     app = FaceAnalysis(name="buffalo_l")
-    app.prepare(ctx_id=0, det_size=(640, 640))
+    app.prepare(ctx_id=-1, det_size=(640, 640))
     return app
 
 def face_gaze_pull_score(frames):

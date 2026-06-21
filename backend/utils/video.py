@@ -8,7 +8,7 @@ def extract_frames(video_path: str, sample_rate: float = 4.0):
 
     cap = cv2.VideoCapture(video_path)
     fps = cap.get(cv2.CAP_PROP_FPS)
-    frame_interval = int(fps / sample_rate)
+    frame_interval = max(1,int(fps / sample_rate))
     
     frames = []
     frame_count = 0
