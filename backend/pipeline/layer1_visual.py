@@ -1,5 +1,7 @@
 import cv2
 import numpy as np
+from insightface.app import FaceAnalysis
+from backend.utils.video import extract_frames
 
 def frame_saliency_score(frames):
     """
@@ -25,9 +27,6 @@ def frame_saliency_score(frames):
         normalized = np.zeros_like(raw_scores)
 
     return normalized.tolist()
-
-import cv2
-import numpy as np
 
 def luminance_shock_score(frames):
     """
@@ -55,3 +54,170 @@ def luminance_shock_score(frames):
         normalized = np.zeros_like(raw_scores)
 
     return normalized.tolist()
+
+def motion_energy_index(frames):
+    raw_scores = [0.0]  # first frame has no previous frame
+    prev_gray = None
+
+    for timestamp, frame in frames:
+        gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+
+        if prev_gray is not None:
+            flow = cv2.calcOpticalFlowFarneback(
+                prev_gray, gray,
+                None,
+                pyr_scale=0.5,
+                levels=3,
+                winsize=15,
+                iterations=3,
+                poly_n=5,
+                poly_sigma=1.2,
+                flags=0
+            )
+            magnitude, _ = cv2.cartToPolar(flow[..., 0], flow[..., 1])
+            raw_scores.append(float(np.mean(magnitude)))
+
+        prev_gray = gray
+
+    raw_scores = np.array(raw_scores)
+    min_val, max_val = raw_scores.min(), raw_scores.max()
+    if max_val - min_val > 1e-6:
+        normalized = (raw_scores - min_val) / (max_val - min_val) * 100
+    else:
+        normalized = np.zeros_like(raw_scores)
+
+    return normalized.tolist()
+
+def colour_valence_index(frames):
+    raw_scores = []
+
+    for timestamp, frame in frames:
+        hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
+        h, s, v = cv2.split(hsv)
+
+        # Warm hues: 0-30 and 150-180 in OpenCV's 0-180 hue range
+        # OpenCV maps 0-360 degrees to 0-180, so divide thresholds by 2
+        warm_mask = (
+            ((h >= 0) & (h <= 30)) |   # red to yellow orange
+            ((h >= 150) & (h <= 180))  # red wrapping around
+        )
+
+        # High saturation mask: above 80 out of 255
+        high_sat_mask = s > 80
+
+        # Combined: warm and saturated
+        warm_saturated = warm_mask & high_sat_mask
+        score = float(np.sum(warm_saturated) / h.size)  # proportion of pixels
+        raw_scores.append(score)
+
+    raw_scores = np.array(raw_scores)
+    min_val, max_val = raw_scores.min(), raw_scores.max()
+    if max_val - min_val > 1e-6:
+        normalized = (raw_scores - min_val) / (max_val - min_val) * 100
+    else:
+        normalized = np.zeros_like(raw_scores)
+
+    return normalized.tolist()
+
+
+face_app = FaceAnalysis(
+    providers=["CPUExecutionProvider"]
+)
+face_app.prepare(ctx_id=-1, det_size=(640, 640))
+
+def face_gaze_pull_score(frames):
+    scores = []
+
+    for timestamp, frame in frames:
+
+        h, w = frame.shape[:2]
+        faces = face_app.get(frame)
+
+        if len(faces) == 0:
+            scores.append(0.0)
+            continue
+
+        # pick largest face
+        face = max(
+            faces,
+            key=lambda f: (f.bbox[2] - f.bbox[0]) * (f.bbox[3] - f.bbox[1])
+        )
+
+        x1, y1, x2, y2 = face.bbox.astype(float)
+
+        # 1. face size score
+        face_area = (x2 - x1) * (y2 - y1)
+        frame_area = w * h
+        face_size_score = min(face_area / (frame_area * 0.25), 1.0)
+
+        #2. centre score
+        face_cx = (x1 + x2) / 2
+        frame_cx = w / 2
+        center_offset = abs(face_cx - frame_cx) / w
+        center_score = max(0.0, 1.0 - 2.0 * center_offset)
+
+        # kps order: left_eye, right_eye, nose, mouth_left, mouth_right
+        left_eye = face.kps[0]
+        right_eye = face.kps[1]
+        nose = face.kps[2]
+        eye_mid = (left_eye + right_eye) / 2
+        eye_dist = np.linalg.norm(right_eye - left_eye)
+
+        if eye_dist > 1e-6:
+            # normalized horizontal nose deviation
+            yaw_proxy = abs(nose[0] - eye_mid[0]) / eye_dist
+            gaze_score = max(0.0, 1.0 - 2.2 * yaw_proxy)
+        else:
+            gaze_score = 0.5
+
+        score = (
+            0.50 * face_size_score +
+            0.20 * center_score +
+            0.30 * gaze_score
+        )
+
+        scores.append(score)
+
+    scores = np.array(scores)
+
+    if len(scores) == 0:
+        return []
+    
+    if np.sum(scores) == 0:
+        return [0.0] * len(scores)
+
+    # logistic compression
+    scaled = 1 / (1 + np.exp(-8 * (scores - 0.3)))
+    return (scaled * 100).tolist()
+
+def aggregate_to_seconds(scores: list, sample_rate: float = 4.0) -> list:
+    """
+    Averages every sample_rate values into one value per second.
+    """
+    chunk_size = int(sample_rate)
+    result = []
+    for i in range(0, len(scores), chunk_size):
+        chunk = scores[i:i + chunk_size]
+        result.append(round(float(np.mean(chunk)), 4))
+    return result
+
+
+def analyse_visual(video_path: str) -> dict:
+    """
+    Returns one score per second for each.
+    """
+    frames = extract_frames(video_path, sample_rate=4.0)
+
+    saliency_scores = frame_saliency_score(frames)
+    shock_scores = luminance_shock_score(frames)
+    motion_scores = motion_energy_index(frames)
+    colour_scores = colour_valence_index(frames)
+    face_scores = face_gaze_pull_score(frames)
+
+    return {
+        "frame_saliency": aggregate_to_seconds(saliency_scores),
+        "luminance_shock": aggregate_to_seconds(shock_scores),
+        "motion_energy": aggregate_to_seconds(motion_scores),
+        "colour_valence": aggregate_to_seconds(colour_scores),
+        "face_gaze_pull": aggregate_to_seconds(face_scores)
+    }
