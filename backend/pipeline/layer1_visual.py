@@ -12,15 +12,15 @@ def frame_saliency_score(frames):
     saliency_detector = cv2.saliency.StaticSaliencySpectralResidual_create()
     raw_scores = []
 
-    if not raw_scores:
-        return []
-
     for timestamp, frame in frames:
         success, saliency_map = saliency_detector.computeSaliency(frame)
         if success:
             raw_scores.append(float(np.mean(saliency_map)))
         else:
             raw_scores.append(0.0)
+    
+    if not raw_scores:
+        return []
 
     # Normalise to 0-100 relative to this video's own range
     raw_scores = np.array(raw_scores)
@@ -94,8 +94,7 @@ def motion_energy_index(frames):
 
 def colour_valence_index(frames):
     raw_scores = []
-    if not raw_scores:
-        return []
+    
     
     for timestamp, frame in frames:
         hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
@@ -115,6 +114,9 @@ def colour_valence_index(frames):
         warm_saturated = warm_mask & high_sat_mask
         score = float(np.sum(warm_saturated) / h.size)  # proportion of pixels
         raw_scores.append(score)
+
+    if not raw_scores:
+        return []
 
     raw_scores = np.array(raw_scores)
     min_val, max_val = raw_scores.min(), raw_scores.max()
