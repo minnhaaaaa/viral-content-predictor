@@ -13,7 +13,6 @@ onnxruntime
 open-clip-torch>=2.24.0
 openai-whisper>=20231117
 opencv-contrib-python>=4.10.0
-opencv-python>=4.10.0
 pandas>=2.2.2
 praat-parselmouth>=0.4.3
 pytrends>=4.9.2
