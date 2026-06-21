@@ -67,7 +67,7 @@ def luminance_shock_score(frames):
 def motion_energy_index(frames):
     if not frames:
         return []
-    raw_scores = []  # first frame has no previous frame
+    raw_scores = [0.0]
     prev_gray = None
 
     for timestamp, frame in frames:
