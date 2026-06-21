@@ -9,8 +9,11 @@ def frame_saliency_score(frames):
     Returns a list of saliency scores, four per sampled frame, scaled 0-100.
     Since extract_frames samples at 4fps, this returns 4 values per second of video, not 1. 
     """
+    if not frames:
+        return []
+    raw_scores = [0.0]
+
     saliency_detector = cv2.saliency.StaticSaliencySpectralResidual_create()
-    raw_scores = []
 
     for timestamp, frame in frames:
         success, saliency_map = saliency_detector.computeSaliency(frame)
@@ -93,8 +96,9 @@ def motion_energy_index(frames):
     return normalized.tolist()
 
 def colour_valence_index(frames):
-    raw_scores = []
-    
+    if not frames:
+        return []
+    raw_scores = [0.0]    
     
     for timestamp, frame in frames:
         hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
@@ -194,7 +198,7 @@ def face_gaze_pull_score(frames):
     min_s, max_s = scores.min(), scores.max()
     normalized = (scores - min_s) / (max_s - min_s + 1e-6)
     normalized *= 100
-    
+
     if np.sum(scores) == 0:
         return [0.0] * len(scores)
 
