@@ -226,13 +226,15 @@ def analyse_visual(video_path: str) -> dict:
     colour_scores = colour_valence_index(frames)
     face_scores = face_gaze_pull_score(frames)
 
-    lengths = {k: len(v) for k, v in result.items()}
-    assert len(set(lengths.values())) == 1, f"Signal length mismatch: {lengths}"
-    
-    return {
+    result = {
         "frame_saliency": aggregate_to_seconds(saliency_scores),
         "luminance_shock": aggregate_to_seconds(shock_scores),
         "motion_energy": aggregate_to_seconds(motion_scores),
         "colour_valence": aggregate_to_seconds(colour_scores),
         "face_gaze_pull": aggregate_to_seconds(face_scores)
     }
+
+    lengths = {k: len(v) for k, v in result.items()}
+    assert len(set(lengths.values())) == 1, f"Signal length mismatch: {lengths}"
+
+    return result
