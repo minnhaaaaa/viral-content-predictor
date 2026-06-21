@@ -2,6 +2,7 @@ import cv2
 import numpy as np
 from insightface.app import FaceAnalysis
 from backend.utils.video import extract_frames
+from functools import lru_cache
 
 def frame_saliency_score(frames):
     """
@@ -99,7 +100,7 @@ def colour_valence_index(frames):
         # OpenCV maps 0-360 degrees to 0-180, so divide thresholds by 2
         warm_mask = (
             ((h >= 0) & (h <= 30)) |   # red to yellow orange
-            ((h >= 150) & (h <= 180))  # red wrapping around
+            ((h >= 165) & (h <= 179))  # red wrapping around
         )
 
         # High saturation mask: above 80 out of 255
@@ -119,17 +120,17 @@ def colour_valence_index(frames):
 
     return normalized.tolist()
 
-
-face_app = FaceAnalysis(
-    providers=["CPUExecutionProvider"]
-)
-face_app.prepare(ctx_id=-1, det_size=(640, 640))
+@lru_cache(maxsize=1)
+def get_face_app():
+    app = FaceAnalysis(name="buffalo_l")
+    app.prepare(ctx_id=0, det_size=(640, 640))
+    return app
 
 def face_gaze_pull_score(frames):
+    face_app = get_face_app()
     scores = []
 
     for timestamp, frame in frames:
-
         h, w = frame.shape[:2]
         faces = face_app.get(frame)
 
