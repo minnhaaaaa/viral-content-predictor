@@ -191,6 +191,10 @@ def face_gaze_pull_score(frames):
     if len(scores) == 0:
         return []
     
+    min_s, max_s = scores.min(), scores.max()
+    normalized = (scores - min_s) / (max_s - min_s + 1e-6)
+    normalized *= 100
+    
     if np.sum(scores) == 0:
         return [0.0] * len(scores)
 
