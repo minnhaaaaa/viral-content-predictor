@@ -12,6 +12,9 @@ def frame_saliency_score(frames):
     saliency_detector = cv2.saliency.StaticSaliencySpectralResidual_create()
     raw_scores = []
 
+    if not raw_scores:
+        return []
+
     for timestamp, frame in frames:
         success, saliency_map = saliency_detector.computeSaliency(frame)
         if success:
@@ -91,7 +94,9 @@ def motion_energy_index(frames):
 
 def colour_valence_index(frames):
     raw_scores = []
-
+    if not raw_scores:
+        return []
+    
     for timestamp, frame in frames:
         hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
         h, s, v = cv2.split(hsv)
