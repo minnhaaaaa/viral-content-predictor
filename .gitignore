@@ -1,6 +1,9 @@
 #temp video storing
 temp_uploads/
 
+#temp manual tests
+manual_test.py
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[codz]
