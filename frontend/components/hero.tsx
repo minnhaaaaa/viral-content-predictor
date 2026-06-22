@@ -5,6 +5,8 @@ import Image from "next/image";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import { HeroReadout } from "@/components/hero-readout";
+import { TextScramble } from "@/components/ui/text-scramble";
+import { TextTypewriter } from "@/components/ui/text-typewriter";
 
 export function Hero() {
   return (
@@ -37,20 +39,44 @@ export function Hero() {
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 1, delay: 0.2, ease: [0.16, 1, 0.3, 1] }}
-            className="font-display font-extrabold leading-none tracking-tight text-foreground text-[3.5rem] md:text-[8rem]"
+            className="font-display font-extrabold leading-none tracking-tight text-[3.5rem] md:text-[8rem] flex"
           >
-            Xenrex<span className="text-primary">AI</span>
+            <TextScramble
+              as="span"
+              duration={0.9}
+              speed={0.045}
+              trigger={true}
+              className="text-foreground"
+            >
+              Xenrex
+            </TextScramble>
+            <TextScramble
+              as="span"
+              duration={0.9}
+              speed={0.045}
+              trigger={true}
+              className="text-primary"
+            >
+              AI
+            </TextScramble>
           </motion.h1>
         </div>
 
-        <motion.p
-          initial={{ opacity: 0, y: 16 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 1, delay: 0.5, ease: [0.16, 1, 0.3, 1] }}
-          className="font-mono text-xs md:text-sm tracking-[0.22em] uppercase text-muted-foreground max-w-[42ch]"
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.6, delay: 1.0 }}
         >
-          Analyse your video, the same way a neuroscientist would.
-        </motion.p>
+          <TextTypewriter
+            as="p"
+            speed={0.03}
+            startDelay={1.0}
+            trigger={true}
+            className="font-mono text-xs md:text-sm tracking-[0.22em] uppercase text-muted-foreground max-w-[42ch] inline-block"
+          >
+            Analyse your video, the same way a neuroscientist would.
+          </TextTypewriter>
+        </motion.div>
 
         <motion.div
           initial={{ opacity: 0, y: 16 }}
