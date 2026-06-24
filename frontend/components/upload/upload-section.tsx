@@ -46,7 +46,13 @@ export function UploadSection() {
     setFile(null);
     setStep(0);
     setFormData(initialFormData);
-    document.getElementById("upload")?.scrollIntoView({ behavior: "smooth", block: "start" });
+    // Use offsetTop so sticky/pinned sections above don't confuse scrollIntoView
+    requestAnimationFrame(() => {
+      const el = document.getElementById("upload");
+      if (el) {
+        window.scrollTo({ top: el.offsetTop, behavior: "smooth" });
+      }
+    });
   }
 
   return (
