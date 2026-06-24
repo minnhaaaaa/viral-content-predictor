@@ -38,9 +38,6 @@ export function SiteHeader() {
           </span>
         </Link>
         <nav className="hidden md:flex gap-9 font-mono text-sm text-muted-foreground">
-          <Link href="#how" className="hover:text-foreground transition-colors">
-            How it reads
-          </Link>
           <Link href="#signals" className="hover:text-foreground transition-colors">
             Signals
           </Link>

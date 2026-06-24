@@ -1,0 +1,706 @@
+"use client";
+
+import React, { useRef, useEffect } from "react";
+import { AnalysisResult } from "./result-types";
+import { AnimatedCircularProgressBar } from "@/components/ui/animated-circular-progress-bar";
+
+/* ─────────────────────────────────────────────────────────────
+   DESIGN TOKENS
+──────────────────────────────────────────────────────────────── */
+const CARD_BASE =
+  "relative overflow-hidden rounded-2xl border border-white/[0.09] bg-white/[0.03] " +
+  "backdrop-blur-md transition-colors duration-300 hover:border-primary/30 hover:bg-white/[0.05]";
+const CARD_H = "h-[220px]";
+
+/* ─────────────────────────────────────────────────────────────
+   REVEAL — opacity only, NO translateY.
+   translateY causes layout shifts that make sections clash on
+   scroll-up. Opacity-only is invisible to layout engine.
+──────────────────────────────────────────────────────────────── */
+function Reveal({
+  children,
+  className = "",
+  delay = 0,
+}: {
+  children: React.ReactNode;
+  className?: string;
+  delay?: number;
+}) {
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+
+    // Already in view on first paint (e.g. top of results) — reveal immediately
+    const obs = new IntersectionObserver(
+      ([entry]) => {
+        if (!entry.isIntersecting) return;
+        // Small delay so transition is visible
+        setTimeout(() => {
+          if (el) el.style.opacity = "1";
+        }, delay * 1000);
+        obs.disconnect();
+      },
+      { threshold: 0.05, rootMargin: "0px 0px -40px 0px" }
+    );
+    obs.observe(el);
+    return () => obs.disconnect();
+  }, [delay]);
+
+  return (
+    <div
+      ref={ref}
+      className={className}
+      style={{
+        opacity: 0,
+        transition: `opacity 0.7s cubic-bezier(0.16,1,0.3,1) ${delay}s`,
+      }}
+    >
+      {children}
+    </div>
+  );
+}
+
+/* ─────────────────────────────────────────────────────────────
+   ANIMATED NUMBER — IntersectionObserver + rAF, zero React state
+──────────────────────────────────────────────────────────────── */
+function useCountUp(
+  ref: React.RefObject<HTMLElement | null>,
+  value: number,
+  suffix = "",
+  startDelay = 0
+) {
+  const hasRun = useRef(false);
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    el.textContent = "—";
+    const obs = new IntersectionObserver(
+      ([entry]) => {
+        if (!entry.isIntersecting || hasRun.current) return;
+        hasRun.current = true;
+        obs.disconnect();
+        setTimeout(() => {
+          const duration = 900;
+          const start = performance.now();
+          function tick(now: number) {
+            const t = Math.min((now - start) / duration, 1);
+            const eased = 1 - Math.pow(1 - t, 3);
+            if (el) el.textContent = Math.round(eased * value) + suffix;
+            if (t < 1) requestAnimationFrame(tick);
+          }
+          requestAnimationFrame(tick);
+        }, startDelay);
+      },
+      { threshold: 0.5 }
+    );
+    obs.observe(el);
+    return () => obs.disconnect();
+  }, [ref, value, suffix, startDelay]);
+}
+
+function AnimatedNumber({
+  value,
+  suffix = "",
+  className = "",
+  startDelay = 0,
+}: {
+  value: number;
+  suffix?: string;
+  className?: string;
+  startDelay?: number;
+}) {
+  const ref = useRef<HTMLSpanElement>(null);
+  useCountUp(ref as React.RefObject<HTMLElement>, value, suffix, startDelay);
+  return <span ref={ref} className={className}>—</span>;
+}
+
+/* ─────────────────────────────────────────────────────────────
+   ANIMATED BAR — CSS width transition via IntersectionObserver
+──────────────────────────────────────────────────────────────── */
+function AnimatedBar({ value, color, delay = 0 }: { value: number; color: string; delay?: number }) {
+  const ref = useRef<HTMLDivElement>(null);
+  const hasRun = useRef(false);
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const obs = new IntersectionObserver(
+      ([entry]) => {
+        if (!entry.isIntersecting || hasRun.current) return;
+        hasRun.current = true;
+        obs.disconnect();
+        setTimeout(() => { if (el) el.style.width = `${value}%`; }, delay * 1000);
+      },
+      { threshold: 0.5 }
+    );
+    obs.observe(el);
+    return () => obs.disconnect();
+  }, [value, delay]);
+  return (
+    <div className="w-full h-1 bg-border rounded-full overflow-hidden mb-3">
+      <div
+        ref={ref}
+        style={{
+          width: 0,
+          height: "100%",
+          borderRadius: 9999,
+          background: color,
+          boxShadow: `0 0 6px ${color}60`,
+          transition: "width 1.1s cubic-bezier(0.16,1,0.3,1)",
+        }}
+      />
+    </div>
+  );
+}
+
+/* ─────────────────────────────────────────────────────────────
+   HELPERS
+──────────────────────────────────────────────────────────────── */
+function SectionLabel({ children }: { children: React.ReactNode }) {
+  return (
+    <p className="inline-flex items-center gap-2 font-mono text-xs tracking-[0.18em] uppercase text-primary mb-4">
+      <span className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
+      {children}
+    </p>
+  );
+}
+
+function SectionHeading({ children }: { children: React.ReactNode }) {
+  return (
+    <h3 className="font-display font-semibold text-2xl md:text-3xl mb-8 text-foreground">
+      {children}
+    </h3>
+  );
+}
+
+/* GlassCard — static position (no transform), opacity reveal only */
+function GlassCard({
+  children,
+  className = "",
+  delay = 0,
+}: {
+  children: React.ReactNode;
+  className?: string;
+  delay?: number;
+}) {
+  return (
+    <Reveal delay={delay} className={`${CARD_BASE} ${CARD_H} p-6 flex flex-col justify-between ${className}`}>
+      <div
+        className="pointer-events-none absolute inset-0 rounded-2xl"
+        style={{ background: "linear-gradient(180deg,rgba(255,255,255,0.04) 0%,transparent 50%)" }}
+      />
+      {children}
+    </Reveal>
+  );
+}
+
+/* ─────────────────────────────────────────────────────────────
+   SVG PATH DRAW — stroke-dashoffset via IntersectionObserver
+──────────────────────────────────────────────────────────────── */
+function useSvgDraw(
+  ref: React.RefObject<SVGPathElement | null>,
+  extraRefs: React.RefObject<SVGPathElement | null>[] = []
+) {
+  const hasRun = useRef(false);
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const obs = new IntersectionObserver(
+      ([entry]) => {
+        if (!entry.isIntersecting || hasRun.current) return;
+        hasRun.current = true;
+        obs.disconnect();
+        const len = el.getTotalLength?.() ?? 800;
+        el.style.strokeDasharray = String(len);
+        el.style.strokeDashoffset = String(len);
+        requestAnimationFrame(() => {
+          el.style.transition = "stroke-dashoffset 2s ease-in-out";
+          el.style.strokeDashoffset = "0";
+        });
+        extraRefs.forEach(r => {
+          if (r.current) {
+            r.current.style.transition = "opacity 0.8s ease 0.3s";
+            r.current.style.opacity = "1";
+          }
+        });
+      },
+      { threshold: 0.25 }
+    );
+    obs.observe(el);
+    return () => obs.disconnect();
+  }, [ref, extraRefs]);
+}
+
+/* ─────────────────────────────────────────────────────────────
+   SECTION 1 — COMPOSITE SCORE  (centred, "Overall Composite Score")
+──────────────────────────────────────────────────────────────── */
+function CompositeScore({ score }: { score: number }) {
+  const triggerRef = useRef<HTMLDivElement>(null);
+  const numberRef = useRef<HTMLSpanElement>(null);
+  const hasRun = useRef(false);
+  const [displayValue, setDisplayValue] = React.useState(0);
+
+  useEffect(() => {
+    const el = triggerRef.current;
+    if (!el) return;
+    const obs = new IntersectionObserver(
+      ([entry]) => {
+        if (!entry.isIntersecting || hasRun.current) return;
+        hasRun.current = true;
+        obs.disconnect();
+        const duration = 1400;
+        const start = performance.now();
+        function tick(now: number) {
+          const t = Math.min((now - start) / duration, 1);
+          const eased = 1 - Math.pow(1 - t, 3);
+          const val = Math.round(eased * score);
+          if (numberRef.current) numberRef.current.textContent = String(val);
+          setDisplayValue(val);
+          if (t < 1) requestAnimationFrame(tick);
+        }
+        requestAnimationFrame(tick);
+      },
+      { threshold: 0.25 }
+    );
+    obs.observe(el);
+    return () => obs.disconnect();
+  }, [score]);
+
+  const grade = score >= 90 ? "A" : score >= 80 ? "B+" : score >= 70 ? "B" : score >= 60 ? "C+" : "C";
+
+  return (
+    <Reveal className="py-20 border-b border-white/[0.06]">
+      <div className="flex flex-col items-center text-center">
+        <SectionLabel>Overall Composite Score</SectionLabel>
+        <h2 className="font-display font-semibold text-3xl md:text-5xl mb-14">
+          Your video&apos;s overall composite score
+        </h2>
+
+        {/* Ring — centred */}
+        <div ref={triggerRef} className="flex flex-col items-center gap-3 mb-12">
+          <div className="relative w-52 h-52">
+            <AnimatedCircularProgressBar
+              value={displayValue}
+              max={100}
+              min={0}
+              gaugePrimaryColor="#00d4c8"
+              gaugeSecondaryColor="rgba(10,58,90,0.5)"
+              className="w-52 h-52"
+            />
+            <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+              <span
+                ref={numberRef}
+                className="font-display font-extrabold leading-none"
+                style={{
+                  fontSize: "3.6rem",
+                  color: "#00d4c8",
+                  filter: "drop-shadow(0 0 14px rgba(0,212,200,0.5))",
+                }}
+              >
+                0
+              </span>
+              <span className="font-mono text-xs tracking-[0.2em] uppercase text-muted-foreground mt-1">
+                /100
+              </span>
+            </div>
+          </div>
+          <span className="font-display font-bold text-4xl" style={{ color: "#00d4c8" }}>
+            {grade}
+          </span>
+        </div>
+
+        {/* Layer quick-stats — centred column */}
+        <div className="flex flex-col items-center gap-3 mb-10 w-full max-w-sm">
+          {[
+            { label: "Neural Visual",       val: 88, good: true },
+            { label: "Neural Audio",        val: 79, good: true },
+            { label: "Emotional Arc",       val: 91, good: true },
+            { label: "Platform Compliance", val: 52, good: false },
+          ].map(s => (
+            <div key={s.label} className="flex items-center gap-4 w-full">
+              <span
+                className={`w-2 h-2 rounded-full flex-shrink-0 ${s.good ? "bg-primary" : "bg-alert"}`}
+              />
+              <span className="font-mono text-xs text-muted-foreground flex-1 text-left">
+                {s.label}
+              </span>
+              <span
+                className={`font-display font-bold text-lg ${s.good ? "text-primary" : "text-alert"}`}
+              >
+                {s.val}
+              </span>
+            </div>
+          ))}
+        </div>
+
+        <p className="text-muted-foreground font-mono text-sm max-w-[48ch] leading-relaxed">
+          Strong video with a clear emotional arc. Platform compliance is the main drag — fix that
+          and this becomes a top&#8209;10% post.
+        </p>
+      </div>
+    </Reveal>
+  );
+}
+
+/* ─────────────────────────────────────────────────────────────
+   SECTION 2 — PLATFORM SCORES
+──────────────────────────────────────────────────────────────── */
+function PlatformScores({ scores }: { scores: AnalysisResult["platform_scores"] }) {
+  const platforms = [
+    { key: "tiktok" as const, label: "TikTok",          desc: "Algorithmic short-form push" },
+    { key: "reels" as const,  label: "Instagram Reels", desc: "Discovery feed, visual-first" },
+    { key: "shorts" as const, label: "YouTube Shorts",  desc: "Subscriber + search hybrid" },
+  ];
+  return (
+    <Reveal className="py-16 border-b border-white/[0.06]">
+      <SectionLabel>Platform Fit</SectionLabel>
+      <SectionHeading>Where this video performs best</SectionHeading>
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        {platforms.map(({ key, label, desc }, i) => {
+          const val = scores[key];
+          const col = val >= 80 ? "#00d4c8" : val >= 65 ? "#f59e0b" : "#ff6b47";
+          return (
+            <GlassCard key={key} delay={i * 0.08}>
+              <div>
+                <span className="font-mono text-xs tracking-widest uppercase text-muted-foreground block mb-2">
+                  {label}
+                </span>
+                <p className="font-mono text-xs" style={{ color: "#0a3a5a" }}>{desc}</p>
+              </div>
+              <div>
+                <AnimatedBar value={val} color={col} delay={i * 0.08 + 0.25} />
+                <span style={{ color: col }}>
+                  <AnimatedNumber value={val} className="font-display font-extrabold text-5xl" startDelay={300} />
+                </span>
+              </div>
+            </GlassCard>
+          );
+        })}
+      </div>
+    </Reveal>
+  );
+}
+
+/* ─────────────────────────────────────────────────────────────
+   SECTION 3 — HOOK SCORE  ("Opening hook strength")
+──────────────────────────────────────────────────────────────── */
+function HookScore({ scores }: { scores: AnalysisResult["hook_score"] }) {
+  const platforms = [
+    { key: "tiktok" as const, label: "TikTok Hook" },
+    { key: "reels" as const,  label: "Reels Hook"  },
+    { key: "shorts" as const, label: "Shorts Hook" },
+  ];
+  return (
+    <Reveal className="py-16 border-b border-white/[0.06]">
+      <SectionLabel>Hook Score</SectionLabel>
+      <SectionHeading>Opening hook strength, per platform</SectionHeading>
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        {platforms.map(({ key, label }, i) => {
+          const val = scores[key];
+          const col = val >= 85 ? "#00d4c8" : val >= 70 ? "#f59e0b" : "#ff6b47";
+          return (
+            <GlassCard key={key} delay={i * 0.08}>
+              <div>
+                <span className="font-mono text-xs tracking-widest uppercase text-muted-foreground block mb-2">
+                  {label}
+                </span>
+                <p className="font-mono text-xs" style={{ color: "#0a3a5a" }}>
+                  {val >= 85
+                    ? "Strong — thumb-stopping open"
+                    : val >= 70
+                    ? "Decent — room to tighten"
+                    : "Weak — rethink the first cut"}
+                </p>
+              </div>
+              <div className="flex items-end gap-1.5">
+                <AnimatedNumber
+                  value={val}
+                  className="font-display font-extrabold text-5xl leading-none"
+                  startDelay={i * 80 + 300}
+                />
+                <span className="font-mono text-sm text-muted-foreground mb-1">/100</span>
+              </div>
+            </GlassCard>
+          );
+        })}
+      </div>
+    </Reveal>
+  );
+}
+
+/* ─────────────────────────────────────────────────────────────
+   SECTION 4 — ATTENTION CURVE + DRIFT CARDS  ("Attention drop-off map")
+──────────────────────────────────────────────────────────────── */
+function AttentionChart({
+  curve,
+  drifts,
+}: {
+  curve: AnalysisResult["attention_curve"];
+  drifts: AnalysisResult["drift_timestamps"];
+}) {
+  const lineRef = useRef<SVGPathElement>(null);
+  const fillRef = useRef<SVGPathElement>(null);
+  useSvgDraw(lineRef, [fillRef]);
+
+  const W = 560, H = 140;
+  const maxSec = curve[curve.length - 1].second;
+  const toX = (s: number) => (s / maxSec) * W;
+  const toY = (v: number) => H - (v / 100) * H;
+  const linePath = curve
+    .map((p, i) => `${i === 0 ? "M" : "L"}${toX(p.second).toFixed(1)},${toY(p.score).toFixed(1)}`)
+    .join(" ");
+  const fillPath = `M0,${H} ${curve.map(p => `L${toX(p.second).toFixed(1)},${toY(p.score).toFixed(1)}`).join(" ")} L${W},${H} Z`;
+
+  return (
+    <Reveal className="py-16 border-b border-white/[0.06]">
+      <SectionLabel>Attention Curve</SectionLabel>
+      <SectionHeading>Attention drop-off map</SectionHeading>
+      <div className={`${CARD_BASE} p-5 mb-4 overflow-x-auto`} style={{ height: "auto" }}>
+        <svg viewBox={`0 0 ${W} ${H + 20}`} className="w-full min-w-[320px]" style={{ height: 180 }}>
+          {[25, 50, 75].map(v => (
+            <line key={v} x1={0} y1={toY(v)} x2={W} y2={toY(v)} stroke="#071f38" strokeWidth="1" />
+          ))}
+          <path ref={fillRef} d={fillPath} fill="rgba(0,212,200,0.07)" style={{ opacity: 0 }} />
+          <path
+            ref={lineRef}
+            d={linePath}
+            fill="none"
+            stroke="#00d4c8"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            style={{ filter: "drop-shadow(0 0 6px rgba(0,212,200,0.5))" }}
+          />
+          {drifts.map(d => {
+            const nearest = curve.reduce((p, c) =>
+              Math.abs(c.second - d.time) < Math.abs(p.second - d.time) ? c : p
+            ).score;
+            return (
+              <g key={d.time}>
+                <line
+                  x1={toX(d.time)} y1={0} x2={toX(d.time)} y2={H}
+                  stroke="#ff6b47" strokeWidth="1.5" strokeDasharray="4 3" opacity="0.7"
+                />
+                <circle
+                  cx={toX(d.time)} cy={toY(nearest)} r="4" fill="#ff6b47"
+                  style={{ filter: "drop-shadow(0 0 5px #ff6b47)" }}
+                />
+              </g>
+            );
+          })}
+          {curve.filter((_, i) => i % 4 === 0).map(p => (
+            <text
+              key={p.second}
+              x={toX(p.second)} y={H + 16}
+              textAnchor="middle"
+              style={{ fill: "#0a3a5a", fontSize: 9, fontFamily: "Fragment Mono, monospace" }}
+            >
+              {p.second}s
+            </text>
+          ))}
+        </svg>
+      </div>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {drifts.map((d, i) => (
+          <GlassCard key={i} delay={i * 0.1} className="border-alert/20">
+            <div className="flex items-center gap-3">
+              <span className="font-mono text-xs px-2.5 py-1 rounded-full bg-alert/10 text-alert border border-alert/20 uppercase tracking-wider whitespace-nowrap flex-shrink-0">
+                {d.severity}
+              </span>
+              <span className="font-mono text-primary text-sm font-bold">{d.time.toFixed(1)}s</span>
+            </div>
+            <div>
+              <p className="font-display font-semibold text-sm mb-1.5">{d.cause}</p>
+              <p className="text-muted-foreground text-xs font-mono leading-relaxed">
+                → {d.recommendation}
+              </p>
+            </div>
+          </GlassCard>
+        ))}
+      </div>
+    </Reveal>
+  );
+}
+
+/* ─────────────────────────────────────────────────────────────
+   SECTION 5 — EMOTIONAL ARC
+──────────────────────────────────────────────────────────────── */
+function EmotionalArcChart({ arc }: { arc: AnalysisResult["emotional_arc"] }) {
+  const lineRef = useRef<SVGPathElement>(null);
+  const fill1Ref = useRef<SVGPathElement>(null);
+  const fill2Ref = useRef<SVGPathElement>(null);
+  useSvgDraw(lineRef, [fill1Ref, fill2Ref]);
+
+  const W = 560, H = 140, midY = H / 2;
+  const maxSec = arc[arc.length - 1].second;
+  const toX = (s: number) => (s / maxSec) * W;
+  const toY = (v: number) => midY - v * (H / 2 - 10);
+  const linePath = arc
+    .map((p, i) => `${i === 0 ? "M" : "L"}${toX(p.second).toFixed(1)},${toY(p.valence).toFixed(1)}`)
+    .join(" ");
+
+  return (
+    <Reveal className="py-16 border-b border-white/[0.06]">
+      <SectionLabel>Emotional Arc</SectionLabel>
+      <SectionHeading>Emotional tone, second by second</SectionHeading>
+      <div className={`${CARD_BASE} p-5 overflow-x-auto`} style={{ height: "auto" }}>
+        <svg viewBox={`0 0 ${W} ${H + 20}`} className="w-full min-w-[320px]" style={{ height: 180 }}>
+          <line x1={0} y1={midY} x2={W} y2={midY} stroke="#0a3a5a" strokeWidth="1.5" />
+          <text x={4} y={midY - 8} style={{ fill: "#0a3a5a", fontSize: 9, fontFamily: "Fragment Mono, monospace" }}>+</text>
+          <text x={4} y={midY + 16} style={{ fill: "#0a3a5a", fontSize: 9, fontFamily: "Fragment Mono, monospace" }}>−</text>
+          <path
+            ref={fill1Ref}
+            d={`M0,${midY} ${arc.map(p => `L${toX(p.second).toFixed(1)},${toY(Math.max(p.valence, 0)).toFixed(1)}`).join(" ")} L${W},${midY} Z`}
+            fill="rgba(0,212,200,0.1)"
+            style={{ opacity: 0 }}
+          />
+          <path
+            ref={fill2Ref}
+            d={`M0,${midY} ${arc.map(p => `L${toX(p.second).toFixed(1)},${toY(Math.min(p.valence, 0)).toFixed(1)}`).join(" ")} L${W},${midY} Z`}
+            fill="rgba(255,107,71,0.1)"
+            style={{ opacity: 0 }}
+          />
+          <path
+            ref={lineRef}
+            d={linePath}
+            fill="none"
+            stroke="#00d4c8"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            style={{ filter: "drop-shadow(0 0 5px rgba(0,212,200,0.4))" }}
+          />
+          {arc.filter((_, i) => i % 4 === 0).map(p => (
+            <text
+              key={p.second}
+              x={toX(p.second)} y={H + 16}
+              textAnchor="middle"
+              style={{ fill: "#0a3a5a", fontSize: 9, fontFamily: "Fragment Mono, monospace" }}
+            >
+              {p.second}s
+            </text>
+          ))}
+        </svg>
+      </div>
+      <p className="font-mono text-xs text-muted-foreground mt-3">
+        Ideal arc: neutral/negative open → escalating positive → strong positive peak → maintained close.
+      </p>
+    </Reveal>
+  );
+}
+
+/* ─────────────────────────────────────────────────────────────
+   SECTION 6 — LAYER BREAKDOWN
+──────────────────────────────────────────────────────────────── */
+function LayerBreakdown({ scores }: { scores: AnalysisResult["layer_scores"] }) {
+  const layers = [
+    { key: "neural_visual" as const,       label: "Neural Visual",       desc: "Frame saliency, motion energy, face detection" },
+    { key: "neural_audio" as const,        label: "Neural Audio",        desc: "BPM sync, voice prosody, spectral surprise" },
+    { key: "emotional_arc" as const,       label: "Emotional Arc",       desc: "Valence trajectory & arc shape scoring" },
+    { key: "platform_compliance" as const, label: "Platform Compliance", desc: "Hook window, format rules, caption timing" },
+  ];
+  return (
+    <Reveal className="py-16 border-b border-white/[0.06]">
+      <SectionLabel>Layer Analysis</SectionLabel>
+      <SectionHeading>Which dimension to fix</SectionHeading>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {layers.map(({ key, label, desc }, i) => {
+          const val = scores[key];
+          const col = val >= 80 ? "#00d4c8" : val >= 60 ? "#f59e0b" : "#ff6b47";
+          return (
+            <GlassCard key={key} delay={i * 0.08}>
+              <div>
+                <span className="font-display font-semibold text-base block mb-1">{label}</span>
+                <p className="text-muted-foreground text-xs font-mono">{desc}</p>
+              </div>
+              <div>
+                <AnimatedBar value={val} color={col} delay={i * 0.08 + 0.25} />
+                <span style={{ color: col }}>
+                  <AnimatedNumber value={val} className="font-display font-extrabold text-5xl" startDelay={300} />
+                </span>
+              </div>
+            </GlassCard>
+          );
+        })}
+      </div>
+    </Reveal>
+  );
+}
+
+/* ─────────────────────────────────────────────────────────────
+   SECTION 7 — DISTRIBUTION  ("Algorithm reach multiplier")
+──────────────────────────────────────────────────────────────── */
+function Distribution({ data }: { data: AnalysisResult["distribution"] }) {
+  const items = [
+    { label: "Trend Alignment", score: data.trend_alignment, desc: "Your keywords are gaining momentum on Google Trends" },
+    { label: "Account Health",  score: data.account_health,  desc: "Posting frequency and follower engagement look solid" },
+    { label: "Posting Timing",  score: data.posting_timing,  desc: data.posting_time_recommendation },
+  ];
+  return (
+    <Reveal className="py-16">
+      <SectionLabel>Distribution</SectionLabel>
+      <SectionHeading>Algorithm reach multiplier</SectionHeading>
+      <p className="text-muted-foreground text-sm mb-8 font-mono -mt-4">
+        Combined multiplier:{" "}
+        <span className="text-primary font-bold text-base">×{data.multiplier}</span>{" "}
+        on your organic reach.
+      </p>
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        {items.map(({ label, score, desc }, i) => {
+          const col = score >= 7 ? "#00d4c8" : score >= 5 ? "#f59e0b" : "#ff6b47";
+          return (
+            <GlassCard key={label} delay={i * 0.08}>
+              <div>
+                <span className="font-display font-semibold text-base block mb-1">{label}</span>
+                <p className="text-muted-foreground text-xs font-mono leading-relaxed">{desc}</p>
+              </div>
+              <div className="flex items-end gap-1.5">
+                <AnimatedNumber
+                  value={score}
+                  suffix=""
+                  className="font-display font-extrabold text-5xl leading-none"
+                  startDelay={i * 80 + 300}
+                />
+                <span className="font-mono text-sm text-muted-foreground mb-1">/10</span>
+              </div>
+            </GlassCard>
+          );
+        })}
+      </div>
+    </Reveal>
+  );
+}
+
+/* ─────────────────────────────────────────────────────────────
+   MASTER DASHBOARD
+──────────────────────────────────────────────────────────────── */
+export function ResultsDashboard({
+  result,
+  onRescan,
+}: {
+  result: AnalysisResult;
+  onRescan: () => void;
+}) {
+  return (
+    <div className="max-w-[900px] mx-auto w-full">
+      <CompositeScore score={result.composite_score} />
+      <PlatformScores scores={result.platform_scores} />
+      <HookScore scores={result.hook_score} />
+      <AttentionChart curve={result.attention_curve} drifts={result.drift_timestamps} />
+      <EmotionalArcChart arc={result.emotional_arc} />
+      <LayerBreakdown scores={result.layer_scores} />
+      <Distribution data={result.distribution} />
+
+      <Reveal className="py-16 flex items-center justify-center border-t border-white/[0.06]">
+        <button
+          type="button"
+          onClick={onRescan}
+          className="inline-flex items-center gap-2 rounded-full bg-primary text-primary-foreground font-mono font-bold text-sm tracking-wide uppercase px-8 py-3.5 transition-all hover:-translate-y-0.5 hover:shadow-[0_8px_28px_rgba(0,212,200,0.3)]"
+        >
+          Scan another video
+        </button>
+      </Reveal>
+    </div>
+  );
+}

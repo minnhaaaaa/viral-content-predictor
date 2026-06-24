@@ -16,35 +16,80 @@ body {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  html {
-    scroll-behavior: auto;
-  }
-  *,
-  *::before,
-  *::after {
+  html { scroll-behavior: auto; }
+  *, *::before, *::after {
     animation-duration: 0.01ms !important;
     transition-duration: 0.01ms !important;
   }
 }
 
 @keyframes stage-in {
-  from {
-    opacity: 0;
-    transform: translateY(14px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+  from { opacity: 0; transform: translateY(14px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
 @keyframes log-in {
-  from {
-    opacity: 0;
-    transform: translateY(4px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: translateY(0); }
 }
+
+/* SVG fill utilities for chart labels */
+.fill-border { fill: #0a3a5a; }
+.fill-primary { fill: #00d4c8; }
+.fill-alert { fill: #ff6b47; }
+.text-alert { color: #ff6b47; }
+.bg-alert { background-color: #ff6b47; }
+.border-alert { border-color: #ff6b47; }
+
+/* Scan-line animation used in analysis video pane */
+@keyframes scanMove {
+  0%   { top: 0%;   opacity: 0; }
+  10%  { opacity: 0.7; }
+  50%  { top: 100%; opacity: 0.7; }
+  60%  { opacity: 0; }
+  100% { top: 0%;   opacity: 0; }
+}
+.animate-scan-move {
+  animation: scanMove 3.2s ease-in-out infinite;
+}
+
+/* 3D transform-style utility (not in Tailwind v3 core) */
+.transform-style-3d {
+  transform-style: preserve-3d;
+}
+
+/* Glass card shimmer on hover */
+@keyframes glass-shimmer {
+  0%   { background-position: -200% center; }
+  100% { background-position:  200% center; }
+}
+.glass-shimmer {
+  position: relative;
+  overflow: hidden;
+}
+.glass-shimmer::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: linear-gradient(105deg, transparent 40%, rgba(255,255,255,0.05) 50%, transparent 60%);
+  background-size: 200% auto;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s;
+}
+.glass-shimmer:hover::after {
+  opacity: 1;
+  animation: glass-shimmer 0.9s linear;
+}
+
+/* Story scroll flow art */
+.flow-art-container {
+  will-change: transform;
+}
+
+/* GSAP hidden-until-reveal helper */
+.gsap-reveal {
+  visibility: hidden;
+}
+
