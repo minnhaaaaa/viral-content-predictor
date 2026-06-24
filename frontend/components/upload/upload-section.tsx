@@ -50,7 +50,8 @@ export function UploadSection() {
     requestAnimationFrame(() => {
       const el = document.getElementById("upload");
       if (el) {
-        window.scrollTo({ top: el.offsetTop, behavior: "smooth" });
+        const top = el.getBoundingClientRect().top + window.scrollY - 80;
+        window.scrollTo({ top, behavior: "smooth" });
       }
     });
   }

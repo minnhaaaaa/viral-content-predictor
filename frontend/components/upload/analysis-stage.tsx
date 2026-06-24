@@ -170,10 +170,15 @@ function AnalysedSplash({ onScrollAway }: { onScrollAway: () => void }) {
     let active = false;
     const enable = setTimeout(() => { active = true; }, 900);
 
+    let ticking = false;
     function handleScroll() {
-      if (!active) return;
-      document.body.style.overflow = "";
-      onScrollAway();
+      if (!active || ticking) return;
+      ticking = true;
+      requestAnimationFrame(() => {
+        ticking = false;
+        document.body.style.overflow = "";
+        onScrollAway();
+      });
     }
     // Listen on window and on document
     window.addEventListener("scroll", handleScroll, { passive: true });
@@ -300,9 +305,9 @@ export function AnalysisStage({ file, onRescan }: { file: File; onRescan: () => 
       requestAnimationFrame(() => {
         const anchor = document.getElementById("results-anchor");
         if (anchor) {
-          // Instant scroll (no smooth) so browser momentum can't carry past it
-          const top = anchor.getBoundingClientRect().top + window.scrollY;
-          window.scrollTo({ top, behavior: "instant" as ScrollBehavior });
+          // Smooth scroll to results for a polished transition
+          const top = anchor.getBoundingClientRect().top + window.scrollY - 80;
+          window.scrollTo({ top, behavior: "smooth" });
         }
       });
     });

@@ -239,7 +239,6 @@ function CompositeScore({ score }: { score: number }) {
   const triggerRef = useRef<HTMLDivElement>(null);
   const numberRef = useRef<HTMLSpanElement>(null);
   const hasRun = useRef(false);
-  const [displayValue, setDisplayValue] = React.useState(0);
 
   useEffect(() => {
     const el = triggerRef.current;
@@ -256,7 +255,6 @@ function CompositeScore({ score }: { score: number }) {
           const eased = 1 - Math.pow(1 - t, 3);
           const val = Math.round(eased * score);
           if (numberRef.current) numberRef.current.textContent = String(val);
-          setDisplayValue(val);
           if (t < 1) requestAnimationFrame(tick);
         }
         requestAnimationFrame(tick);
@@ -281,7 +279,7 @@ function CompositeScore({ score }: { score: number }) {
         <div ref={triggerRef} className="flex flex-col items-center gap-3 mb-12">
           <div className="relative w-52 h-52">
             <AnimatedCircularProgressBar
-              value={displayValue}
+              value={score}
               max={100}
               min={0}
               gaugePrimaryColor="#00d4c8"
