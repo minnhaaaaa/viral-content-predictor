@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useRef, useId } from "react";
+import React, { useRef } from "react";
 import {
   motion,
   useMotionValue,
@@ -11,10 +11,6 @@ import { cn } from "@/lib/utils";
 
 export const InfiniteGrid = ({ className }: { className?: string }) => {
   const containerRef = useRef<HTMLDivElement>(null);
-  const baseId = useId(); 
-  
-  const bgPatternId = `grid-pattern-bg-${baseId}`;
-  const fgPatternId = `grid-pattern-fg-${baseId}`;
 
   const mouseX = useMotionValue(-1000);
   const mouseY = useMotionValue(-1000);
@@ -46,17 +42,14 @@ export const InfiniteGrid = ({ className }: { className?: string }) => {
         className
       )}
     >
-      {/*  Receives the background-specific id */}
       <div className="absolute inset-0 opacity-[0.045] text-primary">
-        <GridPattern offsetX={gridOffsetX} offsetY={gridOffsetY} patternId={bgPatternId} />
+        <GridPattern offsetX={gridOffsetX} offsetY={gridOffsetY} />
       </div>
-      
-      {/*  Receives the foreground-specific id */}
       <motion.div
         className="absolute inset-0 opacity-40 text-primary"
         style={{ maskImage, WebkitMaskImage: maskImage }}
       >
-        <GridPattern offsetX={gridOffsetX} offsetY={gridOffsetY} patternId={fgPatternId} />
+        <GridPattern offsetX={gridOffsetX} offsetY={gridOffsetY} />
       </motion.div>
 
       {/* ambient glow */}
@@ -74,17 +67,15 @@ export const InfiniteGrid = ({ className }: { className?: string }) => {
 const GridPattern = ({
   offsetX,
   offsetY,
-  patternId, 
 }: {
   offsetX: any;
   offsetY: any;
-  patternId: string;
 }) => {
   return (
     <svg className="w-full h-full">
       <defs>
         <motion.pattern
-          id={patternId} 
+          id="xenrex-grid-pattern"
           width="40"
           height="40"
           patternUnits="userSpaceOnUse"
@@ -99,7 +90,7 @@ const GridPattern = ({
           />
         </motion.pattern>
       </defs>
-      <rect width="100%" height="100%" fill={`url(#${patternId})`} /> 
+      <rect width="100%" height="100%" fill="url(#xenrex-grid-pattern)" />
     </svg>
   );
 };

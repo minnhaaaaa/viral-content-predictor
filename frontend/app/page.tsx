@@ -1,7 +1,8 @@
 import { InfiniteGrid } from "@/components/ui/infinite-grid";
 import { SiteHeader } from "@/components/site-header";
 import { Hero } from "@/components/hero";
-import { HowItReads } from "@/components/how-it-reads";
+import { StorySection } from "@/components/story-section";
+import { XenrexCinematicSection } from "@/components/ui/cinematic-landing-hero";
 import { UploadSection } from "@/components/upload/upload-section";
 import { Signals } from "@/components/signals";
 import { CTASection } from "@/components/cta-section";
@@ -14,7 +15,11 @@ export default function Home() {
       <SiteHeader />
       <main className="relative z-[2]">
         <Hero />
-        <HowItReads />
+        <StorySection />
+        <XenrexCinematicSection
+          tagline="Read minds."
+          subTagline="Before they scroll away."
+        />
         <UploadSection />
         <Signals />
         <CTASection />

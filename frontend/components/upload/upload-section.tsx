@@ -46,7 +46,17 @@ export function UploadSection() {
     setFile(null);
     setStep(0);
     setFormData(initialFormData);
-    document.getElementById("upload")?.scrollIntoView({ behavior: "smooth", block: "start" });
+    // Wait one rAF for React to unmount analysisStage and restore the upload DOM,
+    // then use getBoundingClientRect which gives the correct document-relative position
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        const el = document.getElementById("upload");
+        if (el) {
+          const top = el.getBoundingClientRect().top + window.scrollY - 80;
+          window.scrollTo({ top, behavior: "smooth" });
+        }
+      });
+    });
   }
 
   return (

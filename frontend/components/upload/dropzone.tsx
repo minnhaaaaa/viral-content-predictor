@@ -16,7 +16,7 @@ export function Dropzone({ onFile }: { onFile: (file: File) => void }) {
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file && file.type.startsWith("video/")) onFile(file);
+    if (file) onFile(file);
   };
 
   return (
