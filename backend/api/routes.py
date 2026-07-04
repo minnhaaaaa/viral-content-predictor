@@ -5,8 +5,8 @@ from typing import List
 
 from fastapi import APIRouter, File, Form, UploadFile
 
-from schemas.response import AnalysisResponse
-from services.analysis_service import run_analysis
+from backend.schemas.response import AnalysisResponse
+from backend.services.analysis_service import run_analysis
 
 router = APIRouter()
 

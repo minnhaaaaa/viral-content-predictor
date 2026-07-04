@@ -1,13 +1,16 @@
+from functools import lru_cache
+
 import cv2
 import numpy as np
 from insightface.app import FaceAnalysis
+
 from backend.utils.video import extract_frames
-from functools import lru_cache
+
 
 def frame_saliency_score(frames):
     """
     Returns a list of saliency scores, four per sampled frame, scaled 0-100.
-    Since extract_frames samples at 4fps, this returns 4 values per second of video, not 1. 
+    Since extract_frames samples at 4fps, this returns 4 values per second of video, not 1.
     """
     if not frames:
         return []
@@ -21,7 +24,7 @@ def frame_saliency_score(frames):
             raw_scores.append(float(np.mean(saliency_map)))
         else:
             raw_scores.append(0.0)
-    
+
     if not raw_scores:
         return []
 
@@ -34,6 +37,7 @@ def frame_saliency_score(frames):
         normalized = np.zeros_like(raw_scores)
 
     return normalized.tolist()
+
 
 def luminance_shock_score(frames):
     """
@@ -64,6 +68,7 @@ def luminance_shock_score(frames):
 
     return normalized.tolist()
 
+
 def motion_energy_index(frames):
     if not frames:
         return []
@@ -75,7 +80,8 @@ def motion_energy_index(frames):
 
         if prev_gray is not None:
             flow = cv2.calcOpticalFlowFarneback(
-                prev_gray, gray,
+                prev_gray,
+                gray,
                 None,
                 pyr_scale=0.5,
                 levels=3,
@@ -83,7 +89,7 @@ def motion_energy_index(frames):
                 iterations=3,
                 poly_n=5,
                 poly_sigma=1.2,
-                flags=0
+                flags=0,
             )
             magnitude, _ = cv2.cartToPolar(flow[..., 0], flow[..., 1])
             raw_scores.append(float(np.mean(magnitude)))
@@ -99,11 +105,12 @@ def motion_energy_index(frames):
 
     return normalized.tolist()
 
+
 def colour_valence_index(frames):
     if not frames:
         return []
-    raw_scores = []    
-    
+    raw_scores = []
+
     for timestamp, frame in frames:
         hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
         h, s, v = cv2.split(hsv)
@@ -111,8 +118,8 @@ def colour_valence_index(frames):
         # Warm hues: 0-30 and 150-180 in OpenCV's 0-180 hue range
         # OpenCV maps 0-360 degrees to 0-180, so divide thresholds by 2
         warm_mask = (
-            ((h >= 0) & (h <= 30)) |   # red to yellow orange
-            ((h >= 165) & (h <= 179))  # red wrapping around
+            ((h >= 0) & (h <= 30))  # red to yellow orange
+            | ((h >= 165) & (h <= 179))  # red wrapping around
         )
 
         # High saturation mask: above 80 out of 255
@@ -135,11 +142,13 @@ def colour_valence_index(frames):
 
     return normalized.tolist()
 
+
 @lru_cache(maxsize=1)
 def get_face_app():
     app = FaceAnalysis(name="buffalo_l")
     app.prepare(ctx_id=-1, det_size=(640, 640))
     return app
+
 
 def face_gaze_pull_score(frames):
     if not frames:
@@ -157,8 +166,7 @@ def face_gaze_pull_score(frames):
             continue
 
         face = max(
-            faces,
-            key=lambda f: (f.bbox[2] - f.bbox[0]) * (f.bbox[3] - f.bbox[1])
+            faces, key=lambda f: (f.bbox[2] - f.bbox[0]) * (f.bbox[3] - f.bbox[1])
         )
 
         x1, y1, x2, y2 = face.bbox.astype(float)
@@ -183,11 +191,7 @@ def face_gaze_pull_score(frames):
         else:
             gaze_score = 0.5
 
-        score = (
-            0.50 * face_size_score +
-            0.20 * center_score +
-            0.30 * gaze_score
-        )
+        score = 0.50 * face_size_score + 0.20 * center_score + 0.30 * gaze_score
         raw_scores.append(score)
 
     raw_scores = np.array(raw_scores)
@@ -202,6 +206,7 @@ def face_gaze_pull_score(frames):
 
     return normalized.tolist()
 
+
 def aggregate_to_seconds(scores: list, sample_rate: float = 4.0) -> list:
     """
     Averages every sample_rate values into one value per second.
@@ -209,7 +214,7 @@ def aggregate_to_seconds(scores: list, sample_rate: float = 4.0) -> list:
     chunk_size = int(sample_rate)
     result = []
     for i in range(0, len(scores), chunk_size):
-        chunk = scores[i:i + chunk_size]
+        chunk = scores[i : i + chunk_size]
         result.append(round(float(np.mean(chunk)), 4))
     return result
 
@@ -231,7 +236,7 @@ def analyse_visual(video_path: str) -> dict:
         "luminance_shock": aggregate_to_seconds(shock_scores),
         "motion_energy": aggregate_to_seconds(motion_scores),
         "colour_valence": aggregate_to_seconds(colour_scores),
-        "face_gaze_pull": aggregate_to_seconds(face_scores)
+        "face_gaze_pull": aggregate_to_seconds(face_scores),
     }
 
     lengths = {k: len(v) for k, v in result.items()}
