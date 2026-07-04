@@ -1,7 +1,7 @@
 from typing import List
 
-from pipeline.layer1_visual import analyse_visual
-from schemas.response import (
+from backend.pipeline.layer1_visual import analyse_visual
+from backend.schemas.response import (
     AnalysisResponse,
     AttentionPoint,
     DistributionBreakdown,
