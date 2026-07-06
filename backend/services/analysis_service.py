@@ -15,12 +15,14 @@ from backend.schemas.response import (
 def run_analysis(
     video_path: str,
     platform: str,
-    keywords: List[str],
+    keywords: list,
     target_country: str,
     intended_posting_time: str,
     follower_count: int,
     avg_views_last_10: float,
     days_since_last_post: int,
+    content_category: str = "",
+    audio_track: str = "",
 ) -> AnalysisResponse:
 
     # Layer 1 — Visual
