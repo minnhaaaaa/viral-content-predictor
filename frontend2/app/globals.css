@@ -1,0 +1,81 @@
+@tailwind base;
+@tailwind utilities;
+
+/*
+  XenrexAI — Design system adapted from DESIGN.MD (Getharvest reference)
+  Mapping: cream canvas (#fff8f1) → pure white (#ffffff)
+           flame orange (#fa5d00) → deep navy blue (#003566)
+           No second accent. No teal. One chromatic decision only: navy blue.
+*/
+
+:root {
+  /* Canvas & surfaces */
+  --canvas:        #ffffff;   /* page background — pure white */
+  --card:          #ffffff;   /* card surface — same as canvas, depth via shadow */
+  --card-shadow:   rgba(0,53,102,0.14) 6px 4px 24px 0px;   /* navy-tinted glow, DESIGN.MD pattern */
+  --btn-shadow:    rgba(0,0,0,0.2) 0px 1px 4px 0px;
+
+  /* The one accent */
+  --accent:        #003566;   /* primary CTA fill, links, active states, brand */
+  --accent-glow:   rgba(0,53,102,0.14);
+
+  /* Text */
+  --ink:           #0a1628;   /* primary text — near-black, blue undertone */
+  --stone:         #4a5b73;   /* secondary body text */
+  --driftwood:     #7c8ba1;   /* tertiary text, metadata */
+  --ash:           #a3b1c2;   /* helper text, placeholders */
+
+  /* Structural */
+  --mist:          #e0e8f2;   /* hairline dividers, borders */
+  --bone:          #c7d3e2;   /* input borders at rest */
+  --smoke:         #d5dee9;   /* low-priority separators */
+}
+
+html { scroll-behavior: smooth; }
+
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+body {
+  background: var(--canvas);
+  color: var(--ink);
+  font-family: "Space Grotesk", "Helvetica Neue", Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+::selection { background: #003566; color: #fff; }
+
+/* SVG chart utilities */
+.fill-border  { fill: #e0e8f2; }
+.fill-primary { fill: #003566; }
+.fill-alert   { fill: #c8492e; }
+.text-alert   { color: #c8492e; }
+.bg-alert     { background-color: #c8492e; }
+.border-alert { border-color: #c8492e; }
+
+@keyframes scanMove {
+  0%   { top: 0%;   opacity: 0; }
+  10%  { opacity: 0.7; }
+  50%  { top: 100%; opacity: 0.7; }
+  60%  { opacity: 0; }
+  100% { top: 0%;   opacity: 0; }
+}
+.animate-scan-move { animation: scanMove 3.2s ease-in-out infinite; }
+
+@keyframes stage-in { from { opacity: 0; } to { opacity: 1; } }
+@keyframes log-in   { from { opacity: 0; } to { opacity: 1; } }
+@keyframes pulse-dot-navy {
+  0%   { box-shadow: 0 0 0 0 rgba(0,53,102,0.5); }
+  70%  { box-shadow: 0 0 0 7px rgba(0,53,102,0); }
+  100% { box-shadow: 0 0 0 0 rgba(0,53,102,0); }
+}
+.animate-pulse-dot { animation: pulse-dot-navy 2.4s cubic-bezier(0.16,1,0.3,1) infinite; }
+
+.transform-style-3d { transform-style: preserve-3d; }
+.flow-art-container { will-change: transform; }
+.gsap-reveal { visibility: hidden; }
