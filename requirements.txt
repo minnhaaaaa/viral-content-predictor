@@ -1,31 +1,51 @@
 --extra-index-url https://download.pytorch.org/whl/cpu
-torch>=2.10.0
-torchvision>=0.20.0
 
+# PyTorch (CPU-only)
+torch==2.11.0+cpu
+torchvision==0.26.0+cpu
+torchaudio==2.11.0+cpu
+torchcodec==0.11.1
+
+# Web/API
 fastapi>=0.111.0
-google-api-python-client>=2.131.0
-insightface
-librosa>=0.10.2
-moviepy>=1.0.3
-nltk>=3.8.1
-numpy>=1.26.4
-onnxruntime>=1.16.0
+uvicorn[standard]>=0.29.0
+python-multipart>=0.0.9
+pydantic>=2.7.0,<3.0.0
+
+# ML / AI
+transformers>=4.41.0
+sentence-transformers>=2.7.0
 open-clip-torch>=2.24.0
 openai-whisper>=20231117
+ultralytics>=8.2.0
+insightface==0.7.3
+onnxruntime>=1.16.0
+speechbrain>=1.0.0
+silero-vad>=5.1
+
+# Audio / Video
+librosa>=0.10.2
+moviepy>=1.0.3
 opencv-contrib-python>=4.10.0
-pandas>=2.2.2
 praat-parselmouth>=0.4.3
-pydantic>=2.7.0,<3.0.0
-pytrends>=4.9.2
-pytest>=8.0.0
-python-multipart>=0.0.9
-pytz>=2024.1
+
+# NLP
+nltk>=3.8.1
+
+# Data Science
+numpy>=1.26.4
+pandas>=2.2.2
 scikit-learn>=1.4.2
 scikit-image>=0.24.0
 scipy>=1.13.0
-sentence-transformers>=2.7.0
-speechbrain>=1.0.0
-transformers>=4.41.0
-ultralytics>=8.2.0
-uvicorn[standard]>=0.29.0
+
+# Google / Trends
+google-api-python-client>=2.131.0
+pytrends>=4.9.2
+
+# Utilities
+pytz>=2024.1
 yt-dlp>=2024.5.27
+
+# Testing
+pytest>=8.0.0

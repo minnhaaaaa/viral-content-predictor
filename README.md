@@ -29,3 +29,9 @@ The following are the step by step installation process to get the server runnin
 `npm run dev`
 
 Open your browser and navigate to http://localhost:3000 to view the application.
+
+## System Dependencies
+Install ffmpeg before running the project as required by Whisper:
+- Ubuntu/Debian: `sudo apt install ffmpeg`
+- Mac: `brew install ffmpeg`
+- Windows: `https://ffmpeg.org/download.html`
