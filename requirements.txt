@@ -46,6 +46,8 @@ pytrends>=4.9.2
 # Utilities
 pytz>=2024.1
 yt-dlp>=2024.5.27
+geonamescache>=2.0.0
+timezonefinder>=6.5.0
 
 # Testing
 pytest>=8.0.0

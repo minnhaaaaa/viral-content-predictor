@@ -5,7 +5,7 @@ import uuid
 from backend.schemas.response import AnalysisResponse
 from backend.services.analysis_service import run_analysis
 from fastapi import APIRouter, File, Form, HTTPException, UploadFile
-
+from backend.utils.location_search import search_locations
 router = APIRouter()
 
 
@@ -13,13 +13,23 @@ router = APIRouter()
 def health_check():
     return {"status": "ok"}
 
+@router.get("/locations/search")
+def search_locations_endpoint(q: str):
+    """
+    Autocomplete endpoint for the frontend location dropwdown
+    Example: GET /locations/search?q=mumbai
+    """
+    results = search_locations(q)
+    return {"results": results}
 
 @router.post("/analyse", response_model=AnalysisResponse)
 async def analyse_video(
     video: UploadFile = File(...),
     platform: str = Form(...),
     keywords: str = Form(...),
-    target_country: str = Form(...),
+    target_location_lat: float = Form(...),
+    target_location_lon: float = Form(...),
+    target_location_label: str = Form(...),
     intended_posting_time: str = Form(...),
     follower_count: int = Form(...),
     avg_views_last_10: float = Form(...),
@@ -57,7 +67,9 @@ async def analyse_video(
             video_path=temp_path,
             platform=platform,
             keywords=keyword_list,
-            target_country=target_country,
+            target_location_lat=target_location_lat,
+            target_location_lon=target_location_lon,
+            target_location_label=target_location_label,
             intended_posting_time=intended_posting_time,
             follower_count=follower_count,
             avg_views_last_10=avg_views_last_10,
