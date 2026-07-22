@@ -18,36 +18,27 @@ export function SiteHeader() {
   return (
     <header
       className={cn(
-        "fixed top-0 left-0 right-0 z-[100] border-b transition-colors duration-300 backdrop-blur-xl",
-        scrolled
-          ? "bg-background/90 border-border/60"
-          : "bg-background/50 border-transparent"
+        "fixed top-0 left-0 right-0 z-[100] border-b transition-colors duration-150 ease-out backdrop-blur-xl",
+        scrolled ? "bg-black/90 border-graphite-hairline" : "bg-black/60 border-transparent"
       )}
     >
-      <div className="max-w-[1240px] mx-auto flex items-center justify-between gap-8 px-5 md:px-14 py-3.5">
-        <Link href="#top" className="flex items-center gap-2.5 text-foreground">
-          <Image
-            src="/logo.png"
-            alt="XenrexAI logo"
-            width={32}
-            height={32}
-            className="object-contain"
-          />
-          <span className="font-display font-bold text-xl tracking-tight">
-            Xenrex<span className="text-primary">AI</span>
+      <div className="max-w-page mx-auto flex items-center justify-between gap-8 px-6 md:px-14 py-4">
+        <Link href="#top" className="flex items-center gap-2.5">
+          <Image src="/logo.png" alt="XenrexAI logo" width={26} height={26} className="object-contain" />
+          <span className="font-body font-semibold text-lg tracking-tight text-white">
+            Xenrex<span className="text-iris-violet">AI</span>
           </span>
         </Link>
-        <nav className="hidden md:flex gap-9 font-mono text-sm text-muted-foreground">
-          <Link href="#signals" className="hover:text-foreground transition-colors">
-            Signals
-          </Link>
-          <Link href="#upload" className="hover:text-foreground transition-colors">
-            Analyse a video
-          </Link>
+
+        <nav className="hidden md:flex gap-8 font-body text-body-sm text-bone-white">
+          <Link href="#signals" className="hover:text-white transition-colors duration-150 ease-out">Signals</Link>
+          <Link href="#upload"  className="hover:text-white transition-colors duration-150 ease-out">Analyse a video</Link>
         </nav>
+
+        {/* Resend "Ghost on Black" primary button — never filled */}
         <Link
           href="#upload"
-          className="hidden sm:inline-flex items-center gap-2 rounded-full font-mono text-sm tracking-wide uppercase px-7 py-3 border border-border text-foreground transition-all duration-300 hover:border-primary hover:text-primary"
+          className="hidden sm:inline-flex items-center gap-2 rounded-button border border-graphite-hairline px-4 py-3 text-body-sm text-white transition-colors duration-150 ease-out hover:border-white"
         >
           Analyse a video
         </Link>

@@ -9,6 +9,12 @@ import {
 } from "framer-motion";
 import { cn } from "@/lib/utils";
 
+/**
+ * Resend's reference explicitly avoids gradients, glows, or chromatic
+ * washes on the canvas ("the canvas is flat black"). This keeps the
+ * mouse-follow grid texture (a restrained structural detail, not a
+ * decoration) but removes the colored ambient glow wash entirely.
+ */
 export const InfiniteGrid = ({ className }: { className?: string }) => {
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -38,28 +44,19 @@ export const InfiniteGrid = ({ className }: { className?: string }) => {
       ref={containerRef}
       onMouseMove={handleMouseMove}
       className={cn(
-        "fixed inset-0 z-0 overflow-hidden pointer-events-none",
+        "fixed inset-0 z-0 overflow-hidden pointer-events-none bg-black",
         className
       )}
     >
-      <div className="absolute inset-0 opacity-[0.045] text-primary">
+      <div className="absolute inset-0 opacity-[0.05] text-graphite-hairline">
         <GridPattern offsetX={gridOffsetX} offsetY={gridOffsetY} />
       </div>
       <motion.div
-        className="absolute inset-0 opacity-40 text-primary"
+        className="absolute inset-0 opacity-20 text-graphite-hairline"
         style={{ maskImage, WebkitMaskImage: maskImage }}
       >
         <GridPattern offsetX={gridOffsetX} offsetY={gridOffsetY} />
       </motion.div>
-
-      {/* ambient glow */}
-      <div
-        className="absolute inset-0"
-        style={{
-          background:
-            "radial-gradient(ellipse 60% 45% at 50% -5%, rgba(3,125,122,0.15) 0%, transparent 70%)",
-        }}
-      />
     </div>
   );
 };

@@ -255,17 +255,20 @@ def spectral_surprise_index(audio_path: str, duration: int) -> list:
 
     return normalized.tolist()
 
-
-def voice_prosody_score(audio_path: str) -> float:
+def voice_prosody_score(audio_path: str, has_speech: bool = True) -> float:
     """
     Measures pitch range and variation using Praat via parselmouth.
-    Returns a single score 0-100.
+    Only meaningful when speech is present — returns 0.0 otherwise,
+    since Praat's pitch tracker cannot distinguish voice from instruments.
     """
+    if not has_speech:
+        return 0.0
+
     try:
         snd = parselmouth.Sound(audio_path)
         pitch = snd.to_pitch()
         pitch_values = pitch.selected_array["frequency"]
-        pitch_values = pitch_values[pitch_values != 0]  # remove unvoiced frames
+        pitch_values = pitch_values[pitch_values != 0]
 
         if len(pitch_values) == 0:
             return 0.0
@@ -273,8 +276,6 @@ def voice_prosody_score(audio_path: str) -> float:
         pitch_range = float(np.max(pitch_values) - np.min(pitch_values))
         pitch_std = float(np.std(pitch_values))
 
-        # Combine range and variation, scaled heuristically
-        # Typical speaking voice range: 50-300 Hz, std of 20-60 for expressive speech
         range_score = min(pitch_range / 200.0, 1.0) * 100
         variation_score = min(pitch_std / 50.0, 1.0) * 100
 
@@ -285,9 +286,11 @@ def voice_prosody_score(audio_path: str) -> float:
         return 0.0
 
 
-def analyse_audio(audio_path: str, video_path: str, duration: int) -> dict:
+def analyse_audio(audio_path: str, video_path: str, duration: int, has_speech: bool = True) -> dict:
     """
     Runs all audio metrics and returns combined results.
+    has_speech: passed from Layer 3's Silero VAD + Whisper validation,
+    used to gate voice_prosody_score so it doesn't misfire on instrumental audio.
     """
     loudness = loudness_dynamics_score(audio_path)
     silence = silence_ratio_score(audio_path)
@@ -295,7 +298,7 @@ def analyse_audio(audio_path: str, video_path: str, duration: int) -> dict:
     return {
         "bpm_sync": bpm_sync_score(audio_path, video_path, alignment_window=0.15),
         "spectral_surprise": spectral_surprise_index(audio_path, duration),
-        "voice_prosody": voice_prosody_score(audio_path),
+        "voice_prosody": voice_prosody_score(audio_path, has_speech),
         "avg_loudness": loudness["avg_loudness"],
         "loudness_variance": loudness["loudness_variance"],
         "peak_count": loudness["peak_count"],

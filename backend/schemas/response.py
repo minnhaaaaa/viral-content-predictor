@@ -46,6 +46,9 @@ class DistributionBreakdown(BaseModel):
     multiplier: float
     posting_time_recommendation: str
 
+class HookIteration(BaseModel):
+    strategy: str
+    suggestion: str
 
 class AnalysisResponse(BaseModel):
     composite_score: float
@@ -56,3 +59,5 @@ class AnalysisResponse(BaseModel):
     emotional_arc: List[EmotionalPoint]
     hook_score: HookScore
     distribution: DistributionBreakdown
+    ai_summary: str = ""
+    hook_iterations: List[HookIteration] = []

@@ -37,23 +37,13 @@ export function HeroReadout() {
 
   return (
     <div className="absolute bottom-0 left-0 right-0 z-[3] pointer-events-none">
-      <svg
-        className="w-full h-[60px] block overflow-visible"
-        viewBox="0 0 1200 60"
-        preserveAspectRatio="none"
-      >
-        <path d={ghostPath} stroke="#0a3a5a" strokeWidth="1" fill="none" />
-        <path
-          d={livePath}
-          stroke="#00d4c8"
-          strokeWidth="1.5"
-          fill="none"
-          style={{ filter: "drop-shadow(0 0 6px rgba(0,212,200,0.4))" }}
-        />
+      <svg className="w-full h-[60px] block overflow-visible" viewBox="0 0 1200 60" preserveAspectRatio="none">
+        <path d={ghostPath} stroke="#292d30" strokeWidth="1" fill="none" />
+        <path d={livePath} stroke="#9281f7" strokeWidth="1.2" fill="none" />
       </svg>
-      <div className="flex justify-between items-center font-mono text-[0.7rem] tracking-[0.16em] uppercase text-border px-5 md:px-14 pb-6 max-w-[1240px] mx-auto">
+      <div className="flex justify-between items-center font-mono text-caption tracking-[0.16em] uppercase text-charcoal px-5 md:px-14 pb-6 max-w-page mx-auto">
         <span>Attention</span>
-        <span className="text-primary">{label}</span>
+        <span className="text-iris-violet">{label}</span>
         <span>Live Scan</span>
       </div>
     </div>

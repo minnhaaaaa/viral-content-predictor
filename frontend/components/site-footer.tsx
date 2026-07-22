@@ -3,27 +3,17 @@ import Link from "next/link";
 
 export function SiteFooter() {
   return (
-    <footer className="border-t border-white/[0.06]">
-      <div className="max-w-[1240px] mx-auto px-5 md:px-14 py-12 md:py-10">
-        <div className="flex justify-between items-center flex-wrap gap-6 pb-8 border-b border-white/[0.06]">
-          <span className="font-display font-bold text-xl">
-            Xenrex<span className="text-primary">AI</span>
+    <footer className="bg-black border-t border-graphite-hairline">
+      <div className="max-w-page mx-auto px-6 md:px-14 py-10">
+        <div className="flex justify-between items-center flex-wrap gap-4">
+          <span className="font-body font-semibold text-body text-white">
+            Xenrex<span className="text-iris-violet">AI</span>
           </span>
-          <nav className="flex gap-6 md:gap-8 font-mono text-sm flex-wrap">
-            <Link href="#how" className="text-muted-foreground hover:text-primary transition-colors">
-              How it reads
-            </Link>
-            <Link href="#signals" className="text-muted-foreground hover:text-primary transition-colors">
-              Signals
-            </Link>
-            <Link href="#upload" className="text-muted-foreground hover:text-primary transition-colors">
-              Scan a video
-            </Link>
+          {/* Resend Footer Link Row — minimal, two links, no columns */}
+          <nav className="flex gap-6 font-body text-body-sm text-ash-gray">
+            <Link href="#signals" className="hover:text-white transition-colors duration-150 ease-out">Signals</Link>
+            <Link href="#upload"  className="hover:text-white transition-colors duration-150 ease-out">Scan a video</Link>
           </nav>
-        </div>
-        <div className="flex justify-between items-center pt-6 font-mono text-xs text-border tracking-wide flex-wrap gap-4">
-          <span>© 2026 XenrexAI</span>
-          <span className="uppercase">Analyse before you publish</span>
         </div>
       </div>
     </footer>

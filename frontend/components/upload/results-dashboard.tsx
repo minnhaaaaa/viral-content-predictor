@@ -5,23 +5,24 @@ import { AnalysisResult } from "./result-types";
 import { AnimatedCircularProgressBar } from "@/components/ui/animated-circular-progress-bar";
 
 /* ─────────────────────────────────────────────────────────────
-   DESIGN TOKENS (design.md adapted to dark navy)
-   Orange → teal (#00d4c8), cream → dark navy (#020f1e)
-   Cards: white/glass floating on navy. Radius: 20px. Padding: 32-40px.
+   XenrexAI Results Dashboard — Resend "black velvet, violet neon"
+   Canvas:  #000000  (void black — page and card surfaces alike)
+   Cards:   #000000 + 1px #292d30 hairline border (Section Card pattern)
+   Text:    #ffffff primary / #a1a4a5 secondary / #6e727a tertiary
+   Accent:  #9281f7 Iris Violet — reserved for data identifiers only
+            (scores, code-like labels) — never a filled button surface
+   Signal:  #3b9eff Signal Blue — the one filled-button color
+   Alert:   #ff9592 Alarm Red   — drift markers, warnings only
 ──────────────────────────────────────────────────────────────── */
 
-/* Card surface — white-ish glass floating on dark */
 const CARD =
-  "relative overflow-hidden rounded-[20px] bg-[#0a2540] border border-white/[0.08] " +
-  "shadow-[rgba(0,0,0,0.35)_0px_4px_24px_0px] " +
-  "transition-colors duration-300 hover:border-primary/25 hover:bg-[#0c2d4a]";
+  "relative overflow-hidden rounded-card bg-black border border-graphite-hairline " +
+  "shadow-card transition-shadow duration-150 ease-out hover:shadow-card-hover";
 
 const CARD_H = "h-[220px]";
-const CARD_PAD = "p-8"; // 32px = design.md card padding
+const CARD_PAD = "p-8";
 
-/* ─────────────────────────────────────────────────────────────
-   REVEAL — opacity only, no transforms, once-only via disconnect
-──────────────────────────────────────────────────────────────── */
+/* ─── REVEAL — opacity only, once-only via disconnect ───────── */
 function Reveal({ children, className = "", delay = 0 }: { children: React.ReactNode; className?: string; delay?: number }) {
   const ref = useRef<HTMLDivElement>(null);
   useEffect(() => {
@@ -31,7 +32,7 @@ function Reveal({ children, className = "", delay = 0 }: { children: React.React
       if (!entry.isIntersecting) return;
       obs.disconnect();
       setTimeout(() => { if (el) el.style.opacity = "1"; }, delay * 1000 + 40);
-    }, { threshold: 0.05, rootMargin: "0px 0px -30px 0px" });
+    }, { threshold: 0.01 });
     obs.observe(el);
     return () => obs.disconnect();
   }, [delay]);
@@ -42,9 +43,7 @@ function Reveal({ children, className = "", delay = 0 }: { children: React.React
   );
 }
 
-/* ─────────────────────────────────────────────────────────────
-   COUNT-UP — direct DOM write via rAF, triggered by IntersectionObserver
-──────────────────────────────────────────────────────────────── */
+/* ─── COUNT-UP ────────────────────────────────────────────────── */
 function useCountUp(ref: React.RefObject<HTMLElement | null>, value: number, suffix = "", startDelay = 0) {
   const done = useRef(false);
   useEffect(() => {
@@ -77,10 +76,8 @@ function CountSpan({ value, suffix = "", className = "", startDelay = 0 }: { val
   return <span ref={ref} className={className}>—</span>;
 }
 
-/* ─────────────────────────────────────────────────────────────
-   ANIMATED BAR — width CSS transition, triggered separately from card reveal
-──────────────────────────────────────────────────────────────── */
-function AnimatedBar({ value, color, startDelay = 0 }: { value: number; color: string; startDelay?: number }) {
+/* ─── ANIMATED BAR — sky blue by default, coral when flagged low ─ */
+function AnimatedBar({ value, startDelay = 0, tone = "primary" }: { value: number; startDelay?: number; tone?: "primary" | "alert" }) {
   const ref = useRef<HTMLDivElement>(null);
   const done = useRef(false);
   useEffect(() => {
@@ -96,22 +93,13 @@ function AnimatedBar({ value, color, startDelay = 0 }: { value: number; color: s
     return () => obs.disconnect();
   }, [value, startDelay]);
   return (
-    <div className="w-full rounded-full overflow-hidden" style={{ height: 4, background: "rgba(255,255,255,0.08)", marginBottom: 12 }}>
-      <div
-        ref={ref}
-        style={{
-          width: 0, height: "100%", borderRadius: 9999,
-          background: color, boxShadow: `0 0 8px ${color}55`,
-          transition: "width 1.1s cubic-bezier(0.16,1,0.3,1)",
-        }}
-      />
+    <div className="w-full rounded-full overflow-hidden bg-[#292d30]" style={{ height: 4, marginBottom: 12 }}>
+      <div ref={ref} className={tone === "alert" ? "bg-[#ff9592]" : "bg-[#9281f7]"} style={{ width: 0, height: "100%", borderRadius: 9999, transition: "width 1.1s cubic-bezier(0.16,1,0.3,1)" }} />
     </div>
   );
 }
 
-/* ─────────────────────────────────────────────────────────────
-   SVG PATH DRAW — stroke-dashoffset via IntersectionObserver
-──────────────────────────────────────────────────────────────── */
+/* ─── SVG PATH DRAW ───────────────────────────────────────────── */
 function useSvgDraw(ref: React.RefObject<SVGPathElement | null>, fills: React.RefObject<SVGPathElement | null>[] = []) {
   const done = useRef(false);
   useEffect(() => {
@@ -128,50 +116,38 @@ function useSvgDraw(ref: React.RefObject<SVGPathElement | null>, fills: React.Re
         el.style.transition = "stroke-dashoffset 2s ease-in-out";
         el.style.strokeDashoffset = "0";
       });
-      fills.forEach(f => {
-        if (f.current) { f.current.style.transition = "opacity 0.8s ease 0.4s"; f.current.style.opacity = "1"; }
-      });
+      fills.forEach(f => { if (f.current) { f.current.style.transition = "opacity 0.8s ease 0.4s"; f.current.style.opacity = "1"; } });
     }, { threshold: 0.2 });
     obs.observe(el);
     return () => obs.disconnect();
   });
 }
 
-/* ─────────────────────────────────────────────────────────────
-   UI ATOMS
-──────────────────────────────────────────────────────────────── */
+/* ─── UI ATOMS ────────────────────────────────────────────────── */
 function SectionLabel({ children }: { children: React.ReactNode }) {
   return (
-    <p className="inline-flex items-center gap-2 font-mono text-xs tracking-[0.18em] uppercase text-primary mb-4">
-      <span className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
+    <p className="inline-flex items-center gap-2 font-mono text-xs tracking-[0.18em] uppercase text-[#9281f7] mb-4">
+      <span className="w-1.5 h-1.5 rounded-full bg-[#9281f7] animate-pulse-dot" />
       {children}
     </p>
   );
 }
 function SectionHeading({ children }: { children: React.ReactNode }) {
-  return <h3 className="font-display font-semibold text-2xl md:text-3xl mb-8">{children}</h3>;
+  return <h3 className="font-display font-semibold text-2xl md:text-3xl mb-8 text-[#ffffff]">{children}</h3>;
 }
-
-/* Card: design.md style — 20px radius, 32px padding, floating shadow */
 function Card({ children, className = "", delay = 0 }: { children: React.ReactNode; className?: string; delay?: number }) {
   return (
     <Reveal delay={delay} className={`${CARD} ${CARD_H} ${CARD_PAD} flex flex-col justify-between ${className}`}>
-      {/* Inner gradient top sheen (design.md card glow) */}
-      <div className="pointer-events-none absolute inset-0 rounded-[20px]"
-        style={{ background: "linear-gradient(180deg,rgba(255,255,255,0.03) 0%,transparent 45%)" }} />
       {children}
     </Reveal>
   );
 }
 
-/* ─────────────────────────────────────────────────────────────
-   S1 — COMPOSITE SCORE
-──────────────────────────────────────────────────────────────── */
+/* ─── S1 — COMPOSITE SCORE ────────────────────────────────────── */
 function CompositeScore({ score }: { score: number }) {
   const triggerRef = useRef<HTMLDivElement>(null);
   const numRef = useRef<HTMLSpanElement>(null);
   const done = useRef(false);
-  // Isolated state for the ring — only this component re-renders
   const [ringVal, setRingVal] = React.useState(0);
 
   useEffect(() => {
@@ -181,7 +157,6 @@ function CompositeScore({ score }: { score: number }) {
       if (!entry.isIntersecting || done.current) return;
       done.current = true;
       obs.disconnect();
-      // 200ms delay so the Reveal opacity transition finishes first
       setTimeout(() => {
         const dur = 1400, t0 = performance.now();
         const tick = (now: number) => {
@@ -201,10 +176,10 @@ function CompositeScore({ score }: { score: number }) {
   const grade = score >= 90 ? "A" : score >= 80 ? "B+" : score >= 70 ? "B" : score >= 60 ? "C+" : "C";
 
   return (
-    <Reveal className="py-20 border-b border-white/[0.06]">
+    <Reveal className="py-20 border-b border-[#292d30]">
       <div className="flex flex-col items-center text-center">
         <SectionLabel>Overall Composite Score</SectionLabel>
-        <h2 className="font-display font-semibold text-3xl md:text-5xl mb-14">
+        <h2 className="font-display font-semibold text-3xl md:text-5xl mb-14 text-[#ffffff]">
           Your video&apos;s overall composite score
         </h2>
 
@@ -212,37 +187,34 @@ function CompositeScore({ score }: { score: number }) {
           <div className="relative w-52 h-52">
             <AnimatedCircularProgressBar
               value={ringVal} max={100} min={0}
-              gaugePrimaryColor="#00d4c8"
-              gaugeSecondaryColor="rgba(10,58,90,0.5)"
+              gaugePrimaryColor="#9281f7"
+              gaugeSecondaryColor="#292d30"
               className="w-52 h-52"
             />
             <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-              <span ref={numRef} className="font-display font-extrabold leading-none"
-                style={{ fontSize: "3.6rem", color: "#00d4c8", filter: "drop-shadow(0 0 14px rgba(0,212,200,0.45))" }}>
-                0
-              </span>
-              <span className="font-mono text-xs tracking-[0.2em] uppercase text-muted-foreground mt-1">/100</span>
+              <span ref={numRef} className="font-display font-extrabold leading-none" style={{ fontSize: "3.6rem", color: "#9281f7" }}>0</span>
+              <span className="font-mono text-xs tracking-[0.2em] uppercase text-[#464a4d] mt-1">/100</span>
             </div>
           </div>
-          <span className="font-display font-bold text-4xl" style={{ color: "#00d4c8" }}>{grade}</span>
+          <span className="font-display font-bold text-4xl text-[#9281f7]">{grade}</span>
         </div>
 
         <div className="flex flex-col items-center gap-3 mb-10 w-full max-w-sm">
           {[
-            { label: "Neural Visual", val: 88, good: true },
-            { label: "Neural Audio", val: 79, good: true },
-            { label: "Emotional Arc", val: 91, good: true },
+            { label: "Neural Visual",       val: 88, good: true },
+            { label: "Neural Audio",        val: 79, good: true },
+            { label: "Emotional Arc",       val: 91, good: true },
             { label: "Platform Compliance", val: 52, good: false },
           ].map(s => (
             <div key={s.label} className="flex items-center gap-4 w-full">
-              <span className={`w-2 h-2 rounded-full flex-shrink-0 ${s.good ? "bg-primary" : "bg-alert"}`} />
-              <span className="font-mono text-xs text-muted-foreground flex-1 text-left">{s.label}</span>
-              <span className={`font-display font-bold text-lg ${s.good ? "text-primary" : "text-alert"}`}>{s.val}</span>
+              <span className={`w-2 h-2 rounded-full flex-shrink-0 ${s.good ? "bg-[#9281f7]" : "bg-[#ff9592]"}`} />
+              <span className="font-mono text-xs text-[#a1a4a5] flex-1 text-left">{s.label}</span>
+              <span className={`font-display font-bold text-lg ${s.good ? "text-[#9281f7]" : "text-[#ff9592]"}`}>{s.val}</span>
             </div>
           ))}
         </div>
 
-        <p className="text-muted-foreground font-mono text-sm max-w-[48ch] leading-relaxed">
+        <p className="font-mono text-sm max-w-[48ch] leading-relaxed text-[#a1a4a5]">
           Strong video with a clear emotional arc. Platform compliance is the main drag — fix that and this becomes a top&#8209;10% post.
         </p>
       </div>
@@ -250,36 +222,78 @@ function CompositeScore({ score }: { score: number }) {
   );
 }
 
-/* ─────────────────────────────────────────────────────────────
-   S2 — PLATFORM SCORES
-──────────────────────────────────────────────────────────────── */
+/* ─── S2 — AI SUMMARY ─────────────────────────────────────────── */
+function AiSummary({ text }: { text: string }) {
+  if (!text) return null;
+
+  return (
+    <Reveal className="py-16 border-b border-[#292d30]">
+      <SectionLabel>AI Summary</SectionLabel>
+      <SectionHeading>What the model actually thinks</SectionHeading>
+      <div className={`${CARD}`} style={{ height: "auto", padding: "32px" }}>
+        <div className="flex items-start gap-4">
+          <div className="w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5" style={{ background: "rgba(146,129,247,0.12)" }}>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#9281f7" strokeWidth="1.8">
+              <path d="M12 2 L14 9 L21 9 L15.5 13.5 L17.5 21 L12 16.5 L6.5 21 L8.5 13.5 L3 9 L10 9 Z" strokeLinejoin="round"/>
+            </svg>
+          </div>
+          <p className="font-mono text-sm leading-relaxed text-[#ffffff]/90">
+            {text}
+          </p>
+        </div>
+      </div>
+    </Reveal>
+  );
+}
+
+/* ─── S3 — HOOK ITERATIONS ────────────────────────────────────── */
+function HookIterations({ items }: { items: { strategy: string; suggestion: string }[] }) {
+  if (!items || items.length === 0) return null;
+
+  return (
+    <Reveal className="py-16 border-b border-[#292d30]">
+      <SectionLabel>Hook Iterations</SectionLabel>
+      <SectionHeading>Alternative ways to open this video</SectionHeading>
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+        {items.map((item, i) => (
+          <Card key={item.strategy} delay={i * 0.08} className="h-auto">
+            <div>
+              <span className="font-mono text-xs px-2.5 py-1 rounded-full uppercase tracking-wider inline-block mb-3" style={{ background: "rgba(146,129,247,0.14)", color: "#9281f7" }}>
+                {item.strategy}
+              </span>
+              <p className="text-[#ffffff]/85 text-sm font-body leading-relaxed">{item.suggestion}</p>
+            </div>
+          </Card>
+        ))}
+      </div>
+    </Reveal>
+  );
+}
+
+/* ─── S4 — PLATFORM SCORES ────────────────────────────────────── */
 function PlatformScores({ scores }: { scores: AnalysisResult["platform_scores"] }) {
   const list = [
-    { key: "tiktok" as const, label: "TikTok", desc: "Algorithmic short-form push" },
-    { key: "reels" as const, label: "Instagram Reels", desc: "Discovery feed, visual-first" },
-    { key: "shorts" as const, label: "YouTube Shorts", desc: "Subscriber + search hybrid" },
+    { key: "tiktok" as const, label: "TikTok",          desc: "Algorithmic short-form push" },
+    { key: "reels" as const,  label: "Instagram Reels", desc: "Discovery feed, visual-first" },
+    { key: "shorts" as const, label: "YouTube Shorts",  desc: "Subscriber + search hybrid" },
   ];
   return (
-    <Reveal className="py-16 border-b border-white/[0.06]">
+    <Reveal className="py-16 border-b border-[#292d30]">
       <SectionLabel>Platform Fit</SectionLabel>
       <SectionHeading>Where this video performs best</SectionHeading>
       <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
         {list.map(({ key, label, desc }, i) => {
           const val = scores[key];
-          const col = val >= 80 ? "#00d4c8" : val >= 65 ? "#f59e0b" : "#ff6b47";
+          const isLow = val < 65;
           return (
             <Card key={key} delay={i * 0.07}>
               <div>
-                <span className="font-mono text-xs tracking-widest uppercase text-muted-foreground block mb-1">{label}</span>
-                <p className="font-mono text-xs" style={{ color: "#1a4060" }}>{desc}</p>
+                <span className="font-mono text-xs tracking-widest uppercase text-[#a1a4a5] block mb-1">{label}</span>
+                <p className="font-mono text-xs text-[#464a4d]">{desc}</p>
               </div>
               <div>
-                <AnimatedBar value={val} color={col} startDelay={i * 70 + 350} />
-                <div className="flex items-end gap-1.5">
-                  <span style={{ color: col }}>
-                    <CountSpan value={val} className="font-display font-extrabold text-5xl leading-none" startDelay={i * 70 + 350} />
-                  </span>
-                </div>
+                <AnimatedBar value={val} startDelay={i * 70 + 350} tone={isLow ? "alert" : "primary"} />
+                <CountSpan value={val} className={`font-display font-extrabold text-5xl leading-none ${isLow ? "text-[#ff9592]" : "text-[#9281f7]"}`} startDelay={i * 70 + 350} />
               </div>
             </Card>
           );
@@ -289,36 +303,34 @@ function PlatformScores({ scores }: { scores: AnalysisResult["platform_scores"] 
   );
 }
 
-/* ─────────────────────────────────────────────────────────────
-   S3 — HOOK SCORE
-──────────────────────────────────────────────────────────────── */
+/* ─── S5 — HOOK SCORE ─────────────────────────────────────────── */
 function HookScore({ scores }: { scores: AnalysisResult["hook_score"] }) {
   const list = [
     { key: "tiktok" as const, label: "TikTok Hook" },
-    { key: "reels" as const, label: "Reels Hook" },
+    { key: "reels" as const,  label: "Reels Hook" },
     { key: "shorts" as const, label: "Shorts Hook" },
   ];
   return (
-    <Reveal className="py-16 border-b border-white/[0.06]">
+    <Reveal className="py-16 border-b border-[#292d30]">
       <SectionLabel>Hook Score</SectionLabel>
       <SectionHeading>Opening hook strength, per platform</SectionHeading>
       <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
         {list.map(({ key, label }, i) => {
           const val = scores[key];
-          const col = val >= 85 ? "#00d4c8" : val >= 70 ? "#f59e0b" : "#ff6b47";
+          const isLow = val < 70;
           return (
             <Card key={key} delay={i * 0.07}>
               <div>
-                <span className="font-mono text-xs tracking-widest uppercase text-muted-foreground block mb-1">{label}</span>
-                <p className="font-mono text-xs" style={{ color: "#1a4060" }}>
+                <span className="font-mono text-xs tracking-widest uppercase text-[#a1a4a5] block mb-1">{label}</span>
+                <p className="font-mono text-xs text-[#464a4d]">
                   {val >= 85 ? "Strong — thumb-stopping open" : val >= 70 ? "Decent — room to tighten" : "Weak — rethink the first cut"}
                 </p>
               </div>
               <div>
-                <AnimatedBar value={val} color={col} startDelay={i * 70 + 350} />
+                <AnimatedBar value={val} startDelay={i * 70 + 350} tone={isLow ? "alert" : "primary"} />
                 <div className="flex items-end gap-1.5">
-                  <CountSpan value={val} className="font-display font-extrabold text-5xl leading-none" startDelay={i * 70 + 350} />
-                  <span className="font-mono text-sm text-muted-foreground mb-1">/100</span>
+                  <CountSpan value={val} className={`font-display font-extrabold text-5xl leading-none ${isLow ? "text-[#ff9592]" : "text-[#9281f7]"}`} startDelay={i * 70 + 350} />
+                  <span className="font-mono text-sm text-[#464a4d] mb-1">/100</span>
                 </div>
               </div>
             </Card>
@@ -329,9 +341,7 @@ function HookScore({ scores }: { scores: AnalysisResult["hook_score"] }) {
   );
 }
 
-/* ─────────────────────────────────────────────────────────────
-   S4 — ATTENTION CURVE
-──────────────────────────────────────────────────────────────── */
+/* ─── S6 — ATTENTION CURVE — blue line, coral drift markers ──── */
 function AttentionChart({ curve, drifts }: { curve: AnalysisResult["attention_curve"]; drifts: AnalysisResult["drift_timestamps"] }) {
   const lineRef = useRef<SVGPathElement>(null);
   const fillRef = useRef<SVGPathElement>(null);
@@ -345,38 +355,38 @@ function AttentionChart({ curve, drifts }: { curve: AnalysisResult["attention_cu
   const fillPath = `M0,${H} ${curve.map(p => `L${toX(p.second).toFixed(1)},${toY(p.score).toFixed(1)}`).join(" ")} L${W},${H} Z`;
 
   return (
-    <Reveal className="py-16 border-b border-white/[0.06]">
+    <Reveal className="py-16 border-b border-[#292d30]">
       <SectionLabel>Attention Curve</SectionLabel>
       <SectionHeading>Attention drop-off map</SectionHeading>
-      <div className={`${CARD} p-5 mb-5 overflow-x-auto`} style={{ height: "auto" }}>
+      <div className="rounded-card border border-graphite-hairline p-5 mb-5 overflow-x-auto bg-black shadow-card">
         <svg viewBox={`0 0 ${W} ${H + 20}`} className="w-full min-w-[320px]" style={{ height: 180 }}>
-          {[25, 50, 75].map(v => <line key={v} x1={0} y1={toY(v)} x2={W} y2={toY(v)} stroke="#0a3a5a" strokeWidth="1" />)}
-          <path ref={fillRef} d={fillPath} fill="rgba(0,212,200,0.07)" style={{ opacity: 0 }} />
-          <path ref={lineRef} d={linePath} fill="none" stroke="#00d4c8" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ filter: "drop-shadow(0 0 6px rgba(0,212,200,0.5))" }} />
+          {[25, 50, 75].map(v => <line key={v} x1={0} y1={toY(v)} x2={W} y2={toY(v)} stroke="#292d30" strokeWidth="1" />)}
+          <path ref={fillRef} d={fillPath} fill="rgba(146,129,247,0.1)" style={{ opacity: 0 }} />
+          <path ref={lineRef} d={linePath} fill="none" stroke="#9281f7" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
           {drifts.map(d => {
             const nearest = curve.reduce((p, c) => Math.abs(c.second - d.time) < Math.abs(p.second - d.time) ? c : p).score;
             return (
               <g key={d.time}>
-                <line x1={toX(d.time)} y1={0} x2={toX(d.time)} y2={H} stroke="#ff6b47" strokeWidth="1.5" strokeDasharray="4 3" opacity="0.7" />
-                <circle cx={toX(d.time)} cy={toY(nearest)} r="4" fill="#ff6b47" style={{ filter: "drop-shadow(0 0 5px #ff6b47)" }} />
+                <line x1={toX(d.time)} y1={0} x2={toX(d.time)} y2={H} stroke="#ff9592" strokeWidth="1.5" strokeDasharray="4 3" opacity="0.8" />
+                <circle cx={toX(d.time)} cy={toY(nearest)} r="4" fill="#ff9592" />
               </g>
             );
           })}
           {curve.filter((_, i) => i % 4 === 0).map(p => (
-            <text key={p.second} x={toX(p.second)} y={H + 16} textAnchor="middle" style={{ fill: "#1a4060", fontSize: 9, fontFamily: "Fragment Mono, monospace" }}>{p.second}s</text>
+            <text key={p.second} x={toX(p.second)} y={H + 16} textAnchor="middle" style={{ fill: "#464a4d", fontSize: 9, fontFamily: "Fragment Mono, monospace" }}>{p.second}s</text>
           ))}
         </svg>
       </div>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
         {drifts.map((d, i) => (
-          <Card key={i} delay={i * 0.08} className="border-alert/20">
+          <Card key={i} delay={i * 0.08}>
             <div className="flex items-center gap-3">
-              <span className="font-mono text-xs px-2.5 py-1 rounded-full bg-alert/10 text-alert border border-alert/20 uppercase tracking-wider whitespace-nowrap">{d.severity}</span>
-              <span className="font-mono text-primary text-sm font-bold">{d.time.toFixed(1)}s</span>
+              <span className="font-mono text-xs px-2.5 py-1 rounded-full uppercase tracking-wider whitespace-nowrap" style={{ background: "rgba(255,149,146,0.15)", color: "#ff9592" }}>{d.severity}</span>
+              <span className="font-mono text-[#ff9592] text-sm font-bold">{d.time.toFixed(1)}s</span>
             </div>
             <div>
-              <p className="font-display font-semibold text-sm mb-1.5">{d.cause}</p>
-              <p className="text-muted-foreground text-xs font-mono leading-relaxed">→ {d.recommendation}</p>
+              <p className="font-display font-semibold text-sm mb-1.5 text-[#ffffff]">{d.cause}</p>
+              <p className="text-[#a1a4a5] text-xs font-mono leading-relaxed">→ {d.recommendation}</p>
             </div>
           </Card>
         ))}
@@ -385,9 +395,7 @@ function AttentionChart({ curve, drifts }: { curve: AnalysisResult["attention_cu
   );
 }
 
-/* ─────────────────────────────────────────────────────────────
-   S5 — EMOTIONAL ARC
-──────────────────────────────────────────────────────────────── */
+/* ─── S7 — EMOTIONAL ARC — blue positive / coral negative ────── */
 function EmotionalArcChart({ arc }: { arc: AnalysisResult["emotional_arc"] }) {
   const lineRef = useRef<SVGPathElement>(null);
   const fill1Ref = useRef<SVGPathElement>(null);
@@ -401,58 +409,54 @@ function EmotionalArcChart({ arc }: { arc: AnalysisResult["emotional_arc"] }) {
   const linePath = arc.map((p, i) => `${i === 0 ? "M" : "L"}${toX(p.second).toFixed(1)},${toY(p.valence).toFixed(1)}`).join(" ");
 
   return (
-    <Reveal className="py-16 border-b border-white/[0.06]">
+    <Reveal className="py-16 border-b border-[#292d30]">
       <SectionLabel>Emotional Arc</SectionLabel>
       <SectionHeading>Emotional tone, second by second</SectionHeading>
-      <div className={`${CARD} p-5 overflow-x-auto`} style={{ height: "auto" }}>
+      <div className="rounded-card border border-graphite-hairline p-5 overflow-x-auto bg-black shadow-card">
         <svg viewBox={`0 0 ${W} ${H + 20}`} className="w-full min-w-[320px]" style={{ height: 180 }}>
-          <line x1={0} y1={midY} x2={W} y2={midY} stroke="#0a3a5a" strokeWidth="1.5" />
-          <text x={6} y={midY - 8} style={{ fill: "#1a4060", fontSize: 9, fontFamily: "Fragment Mono, monospace" }}>+</text>
-          <text x={6} y={midY + 16} style={{ fill: "#1a4060", fontSize: 9, fontFamily: "Fragment Mono, monospace" }}>−</text>
-          <path ref={fill1Ref} d={`M0,${midY} ${arc.map(p => `L${toX(p.second).toFixed(1)},${toY(Math.max(p.valence, 0)).toFixed(1)}`).join(" ")} L${W},${midY} Z`} fill="rgba(0,212,200,0.1)" style={{ opacity: 0 }} />
-          <path ref={fill2Ref} d={`M0,${midY} ${arc.map(p => `L${toX(p.second).toFixed(1)},${toY(Math.min(p.valence, 0)).toFixed(1)}`).join(" ")} L${W},${midY} Z`} fill="rgba(255,107,71,0.1)" style={{ opacity: 0 }} />
-          <path ref={lineRef} d={linePath} fill="none" stroke="#00d4c8" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ filter: "drop-shadow(0 0 5px rgba(0,212,200,0.4))" }} />
+          <line x1={0} y1={midY} x2={W} y2={midY} stroke="#292d30" strokeWidth="1.5" />
+          <text x={6} y={midY - 8} style={{ fill: "#a1a4a5", fontSize: 9, fontFamily: "Fragment Mono, monospace" }}>+</text>
+          <text x={6} y={midY + 16} style={{ fill: "#a1a4a5", fontSize: 9, fontFamily: "Fragment Mono, monospace" }}>−</text>
+          <path ref={fill1Ref} d={`M0,${midY} ${arc.map(p => `L${toX(p.second).toFixed(1)},${toY(Math.max(p.valence, 0)).toFixed(1)}`).join(" ")} L${W},${midY} Z`} fill="rgba(146,129,247,0.14)" style={{ opacity: 0 }} />
+          <path ref={fill2Ref} d={`M0,${midY} ${arc.map(p => `L${toX(p.second).toFixed(1)},${toY(Math.min(p.valence, 0)).toFixed(1)}`).join(" ")} L${W},${midY} Z`} fill="rgba(255,149,146,0.14)" style={{ opacity: 0 }} />
+          <path ref={lineRef} d={linePath} fill="none" stroke="#9281f7" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
           {arc.filter((_, i) => i % 4 === 0).map(p => (
-            <text key={p.second} x={toX(p.second)} y={H + 16} textAnchor="middle" style={{ fill: "#1a4060", fontSize: 9, fontFamily: "Fragment Mono, monospace" }}>{p.second}s</text>
+            <text key={p.second} x={toX(p.second)} y={H + 16} textAnchor="middle" style={{ fill: "#464a4d", fontSize: 9, fontFamily: "Fragment Mono, monospace" }}>{p.second}s</text>
           ))}
         </svg>
       </div>
-      <p className="font-mono text-xs text-muted-foreground mt-3">
+      <p className="font-mono text-xs text-[#a1a4a5] mt-3">
         Ideal arc: neutral/negative open → escalating positive → strong positive peak → maintained close.
       </p>
     </Reveal>
   );
 }
 
-/* ─────────────────────────────────────────────────────────────
-   S6 — LAYER BREAKDOWN
-──────────────────────────────────────────────────────────────── */
+/* ─── S8 — LAYER BREAKDOWN ────────────────────────────────────── */
 function LayerBreakdown({ scores }: { scores: AnalysisResult["layer_scores"] }) {
   const layers = [
-    { key: "neural_visual" as const, label: "Neural Visual", desc: "Frame saliency, motion energy, face detection" },
-    { key: "neural_audio" as const, label: "Neural Audio", desc: "BPM sync, voice prosody, spectral surprise" },
-    { key: "emotional_arc" as const, label: "Emotional Arc", desc: "Valence trajectory & arc shape scoring" },
+    { key: "neural_visual" as const,       label: "Neural Visual",       desc: "Frame saliency, motion energy, face detection" },
+    { key: "neural_audio" as const,        label: "Neural Audio",        desc: "BPM sync, voice prosody, spectral surprise" },
+    { key: "emotional_arc" as const,       label: "Emotional Arc",       desc: "Valence trajectory & arc shape scoring" },
     { key: "platform_compliance" as const, label: "Platform Compliance", desc: "Hook window, format rules, caption timing" },
   ];
   return (
-    <Reveal className="py-16 border-b border-white/[0.06]">
+    <Reveal className="py-16 border-b border-[#292d30]">
       <SectionLabel>Layer Analysis</SectionLabel>
       <SectionHeading>Which dimension to fix</SectionHeading>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
         {layers.map(({ key, label, desc }, i) => {
           const val = scores[key];
-          const col = val >= 80 ? "#00d4c8" : val >= 60 ? "#f59e0b" : "#ff6b47";
+          const isLow = val < 60;
           return (
             <Card key={key} delay={i * 0.07}>
               <div>
-                <span className="font-display font-semibold text-base block mb-1">{label}</span>
-                <p className="text-muted-foreground text-xs font-mono">{desc}</p>
+                <span className="font-display font-semibold text-base block mb-1 text-[#ffffff]">{label}</span>
+                <p className="text-[#a1a4a5] text-xs font-mono">{desc}</p>
               </div>
               <div>
-                <AnimatedBar value={val} color={col} startDelay={i * 70 + 350} />
-                <span style={{ color: col }}>
-                  <CountSpan value={val} className="font-display font-extrabold text-5xl" startDelay={i * 70 + 350} />
-                </span>
+                <AnimatedBar value={val} startDelay={i * 70 + 350} tone={isLow ? "alert" : "primary"} />
+                <CountSpan value={val} className={`font-display font-extrabold text-5xl ${isLow ? "text-[#ff9592]" : "text-[#9281f7]"}`} startDelay={i * 70 + 350} />
               </div>
             </Card>
           );
@@ -462,36 +466,34 @@ function LayerBreakdown({ scores }: { scores: AnalysisResult["layer_scores"] }) 
   );
 }
 
-/* ─────────────────────────────────────────────────────────────
-   S7 — DISTRIBUTION
-──────────────────────────────────────────────────────────────── */
+/* ─── S9 — DISTRIBUTION ───────────────────────────────────────── */
 function Distribution({ data }: { data: AnalysisResult["distribution"] }) {
   const items = [
     { label: "Trend Alignment", score: data.trend_alignment, desc: "Your keywords are gaining momentum on Google Trends" },
-    { label: "Account Health", score: data.account_health, desc: "Posting frequency and follower engagement look solid" },
-    { label: "Posting Timing", score: data.posting_timing, desc: data.posting_time_recommendation },
+    { label: "Account Health",  score: data.account_health,  desc: "Posting frequency and follower engagement look solid" },
+    { label: "Posting Timing",  score: data.posting_timing,  desc: data.posting_time_recommendation },
   ];
   return (
     <Reveal className="py-16">
       <SectionLabel>Distribution</SectionLabel>
       <SectionHeading>Algorithm reach multiplier</SectionHeading>
-      <p className="text-muted-foreground text-sm mb-8 font-mono -mt-4">
-        Combined multiplier: <span className="text-primary font-bold text-base">×{data.multiplier}</span> on your organic reach.
+      <p className="text-[#a1a4a5] text-sm mb-8 font-mono -mt-4">
+        Combined multiplier: <span className="text-[#9281f7] font-bold text-base">×{data.multiplier}</span> on your organic reach.
       </p>
       <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
         {items.map(({ label, score, desc }, i) => {
-          const col = score >= 7 ? "#00d4c8" : score >= 5 ? "#f59e0b" : "#ff6b47";
+          const isLow = score < 5;
           return (
             <Card key={label} delay={i * 0.07}>
               <div>
-                <span className="font-display font-semibold text-base block mb-1">{label}</span>
-                <p className="text-muted-foreground text-xs font-mono leading-relaxed">{desc}</p>
+                <span className="font-display font-semibold text-base block mb-1 text-[#ffffff]">{label}</span>
+                <p className="text-[#a1a4a5] text-xs font-mono leading-relaxed">{desc}</p>
               </div>
               <div>
-                <AnimatedBar value={score * 10} color={col} startDelay={i * 70 + 350} />
+                <AnimatedBar value={score * 10} startDelay={i * 70 + 350} tone={isLow ? "alert" : "primary"} />
                 <div className="flex items-end gap-1.5">
-                  <CountSpan value={score} className="font-display font-extrabold text-5xl leading-none" startDelay={i * 70 + 350} />
-                  <span className="font-mono text-sm text-muted-foreground mb-1">/10</span>
+                  <CountSpan value={score} className={`font-display font-extrabold text-5xl leading-none ${isLow ? "text-[#ff9592]" : "text-[#9281f7]"}`} startDelay={i * 70 + 350} />
+                  <span className="font-mono text-sm text-[#464a4d] mb-1">/10</span>
                 </div>
               </div>
             </Card>
@@ -502,22 +504,22 @@ function Distribution({ data }: { data: AnalysisResult["distribution"] }) {
   );
 }
 
-/* ─────────────────────────────────────────────────────────────
-   MASTER DASHBOARD
-──────────────────────────────────────────────────────────────── */
+/* ─── MASTER DASHBOARD ────────────────────────────────────────── */
 export function ResultsDashboard({ result, onRescan }: { result: AnalysisResult; onRescan: () => void }) {
   return (
-    <div className="max-w-[900px] mx-auto w-full">
+    <div className="max-w-[900px] mx-auto w-full px-5 md:px-0">
       <CompositeScore score={result.composite_score} />
+      <AiSummary text={result.ai_summary} />
       <PlatformScores scores={result.platform_scores} />
       <HookScore scores={result.hook_score} />
+      <HookIterations items={result.hook_iterations} />
       <AttentionChart curve={result.attention_curve} drifts={result.drift_timestamps} />
       <EmotionalArcChart arc={result.emotional_arc} />
       <LayerBreakdown scores={result.layer_scores} />
       <Distribution data={result.distribution} />
-      <Reveal className="py-16 flex items-center justify-center border-t border-white/[0.06]">
+      <Reveal className="py-16 flex items-center justify-center border-t border-graphite-hairline">
         <button type="button" onClick={onRescan}
-          className="inline-flex items-center gap-2 rounded-full bg-primary text-primary-foreground font-mono font-bold text-sm tracking-wide uppercase px-8 py-3.5 transition-all hover:-translate-y-0.5 hover:shadow-[0_8px_28px_rgba(0,212,200,0.3)]">
+          className="inline-flex items-center gap-2 rounded-button border border-graphite-hairline bg-transparent text-white font-body text-body-sm px-6 py-3 transition-colors duration-150 ease-out hover:border-white">
           Scan another video
         </button>
       </Reveal>

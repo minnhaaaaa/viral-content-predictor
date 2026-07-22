@@ -42,10 +42,12 @@ export function FadeReveal({
   children,
   className,
   delay = 0,
+  style,
 }: {
   children: React.ReactNode;
   className?: string;
   delay?: number;
+  style?: React.CSSProperties;
 }) {
   const ref = React.useRef<HTMLDivElement>(null);
   const isInView = useInView(ref, { once: true, amount: 0.2 });
@@ -54,6 +56,7 @@ export function FadeReveal({
     <motion.div
       ref={ref}
       className={className}
+      style={style}
       initial={{ opacity: 0, y: 28 }}
       animate={isInView ? { opacity: 1, y: 0 } : {}}
       transition={{ duration: 0.75, delay, ease: [0.16, 1, 0.3, 1] }}

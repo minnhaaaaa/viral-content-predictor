@@ -1,3 +1,8 @@
+export interface HookIteration {
+  strategy: string
+  suggestion: string
+}
+
 export interface AnalysisResult {
   composite_score: number
   platform_scores: { tiktok: number; reels: number; shorts: number }
@@ -23,6 +28,11 @@ export interface AnalysisResult {
     multiplier: number
     posting_time_recommendation: string
   }
+  /** AI-generated (Ollama llama3.2:3b). Best-effort — may be "" if the LLM
+   *  service was unreachable. Always check truthiness before rendering. */
+  ai_summary: string
+  /** AI-generated. Best-effort — may be [] under the same failure condition. */
+  hook_iterations: HookIteration[]
 }
 
 export const MOCK_RESULT: AnalysisResult = {
@@ -64,4 +74,10 @@ export const MOCK_RESULT: AnalysisResult = {
     multiplier: 1.27,
     posting_time_recommendation: "Post between 7:00 PM and 10:00 PM GST",
   },
+  ai_summary: "This video scores 84/100, driven largely by a strong emotional arc (91) and solid visual hook. The weakest area is platform compliance (52) — the aspect ratio isn't fully optimized for vertical feeds. Fixing the crop before posting is the single highest-impact change available.",
+  hook_iterations: [
+    { strategy: "Curiosity gap",    suggestion: "Open on the finished result before showing how you got there." },
+    { strategy: "Direct address",   suggestion: "Start with 'If you've ever struggled with X, watch this.'" },
+    { strategy: "Pattern interrupt",suggestion: "Open mid-action with no context, let the confusion pull viewers in." },
+  ],
 }

@@ -1,3 +1,13 @@
+export interface LocationResult {
+  city: string;
+  country: string;
+  country_code: string;
+  lat: number;
+  lon: number;
+  population?: number;
+  display_name: string;
+}
+
 export interface AnalysisFormData {
   followerCount: string;
   daysSinceUpload: string;
@@ -6,7 +16,7 @@ export interface AnalysisFormData {
   contentKeywords: string;
   contentCategory: string | null;
   audioTrack: string;
-  audienceLocation: string;
+  location: LocationResult | null;
   postTime: string;
 }
 

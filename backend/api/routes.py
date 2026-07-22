@@ -35,24 +35,18 @@ async def analyse_video(
     avg_views_last_10: float = Form(...),
     days_since_last_post: int = Form(...),
     content_category: str = Form(default=""),
-    audio_track: str = Form(default=""),
+    audio_track: str = Form(default="")
 ):
-    # Validate file type
     if not video.filename.endswith((".mp4", ".mov")):
-        raise HTTPException(
-            status_code=400, detail="Only .mp4 and .mov files are supported"
-        )
+        raise HTTPException(status_code=400, detail="Only .mp4 and .mov files are supported")
 
-    # Validate file size — reject anything over 200MB
     contents = await video.read()
     if len(contents) > 200 * 1024 * 1024:
         raise HTTPException(status_code=400, detail="File size exceeds 200MB limit")
 
-    # Normalise platform name from frontend values to internal values
     platform_map = {"instagram": "reels", "youtube": "shorts", "tiktok": "tiktok"}
     platform = platform_map.get(platform, platform)
 
-    # Save to temp
     temp_filename = f"{uuid.uuid4()}.mp4"
     temp_path = os.path.join("temp_uploads", temp_filename)
     os.makedirs("temp_uploads", exist_ok=True)
@@ -61,7 +55,7 @@ async def analyse_video(
         f.write(contents)
 
     try:
-        keyword_list = [k.strip() for k in keywords.split(",")]
+        keyword_list = [k.strip() for k in keywords.split(",") if k.strip()]
 
         result = run_analysis(
             video_path=temp_path,
@@ -75,12 +69,16 @@ async def analyse_video(
             avg_views_last_10=avg_views_last_10,
             days_since_last_post=days_since_last_post,
             content_category=content_category,
-            audio_track=audio_track,
+            audio_track=audio_track
         )
     except Exception as e:
         raise HTTPException(status_code=422, detail=str(e))
     finally:
         if os.path.exists(temp_path):
             os.remove(temp_path)
+        # Clean up extracted audio file too
+        audio_temp = temp_path.replace(".mp4", "_audio.wav")
+        if os.path.exists(audio_temp):
+            os.remove(audio_temp)
 
     return result

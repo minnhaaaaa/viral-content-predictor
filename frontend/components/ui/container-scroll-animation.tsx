@@ -70,14 +70,14 @@ export const Card = ({
         rotateX: rotate,
         scale,
         boxShadow:
-          "0 0 60px rgba(0,212,200,0.06), 0 9px 20px #0000004a, 0 40px 80px rgba(0,0,0,0.5)",
+          "0 0 40px rgba(0,53,102,0.15), 0 9px 20px rgba(0,0,0,0.08), 0 40px 80px rgba(0,53,102,0.1)",
         transformPerspective: 1200,
       }}
       className="max-w-[1000px] mx-auto w-full border-2 border-border p-1.5 md:p-2 rounded-[24px]"
     >
       <div
         className="h-full w-full overflow-hidden rounded-[18px] min-h-[420px] md:min-h-[460px]"
-        style={{ backgroundColor: "#001d3d" }}
+        style={{ backgroundColor: "#141E3D" }}
       >
         {children}
       </div>

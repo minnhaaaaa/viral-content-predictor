@@ -1,103 +1,48 @@
 "use client";
-
 import * as React from "react";
 import { motion, AnimatePresence, MotionConfig } from "framer-motion";
 import { ChevronDown } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-export interface DropdownOption {
-  id: string;
-  label: string;
-}
+export interface DropdownOption { id: string; label: string; }
 
-function useClickAway(
-  ref: React.RefObject<HTMLElement>,
-  handler: (event: MouseEvent | TouchEvent) => void
-) {
+function useClickAway(ref: React.RefObject<HTMLElement>, handler: (e: MouseEvent | TouchEvent) => void) {
   React.useEffect(() => {
-    const listener = (event: MouseEvent | TouchEvent) => {
-      if (!ref.current || ref.current.contains(event.target as Node)) return;
-      handler(event);
-    };
-    document.addEventListener("mousedown", listener);
-    document.addEventListener("touchstart", listener);
-    return () => {
-      document.removeEventListener("mousedown", listener);
-      document.removeEventListener("touchstart", listener);
-    };
+    const fn = (e: MouseEvent | TouchEvent) => { if (!ref.current || ref.current.contains(e.target as Node)) return; handler(e); };
+    document.addEventListener("mousedown", fn);
+    document.addEventListener("touchstart", fn);
+    return () => { document.removeEventListener("mousedown", fn); document.removeEventListener("touchstart", fn); };
   }, [ref, handler]);
 }
 
-const containerVariants = {
-  hidden: { opacity: 0 },
-  visible: {
-    opacity: 1,
-    transition: { when: "beforeChildren", staggerChildren: 0.06 },
-  },
-};
-
 const itemVariants = {
-  hidden: { opacity: 0, y: -8 },
-  visible: {
-    opacity: 1,
-    y: 0,
-    transition: { duration: 0.25, ease: [0.25, 0.1, 0.25, 1] },
-  },
+  hidden:  { opacity: 0, y: -4 },
+  visible: { opacity: 1, y: 0, transition: { duration: 0.15, ease: [0.25, 0.1, 0.25, 1] as any } },
 };
 
-interface FluidDropdownProps {
-  options: DropdownOption[];
-  placeholder: string;
-  value: string | null;
-  onChange: (value: string) => void;
-  className?: string;
-}
-
-export function FluidDropdown({
-  options,
-  placeholder,
-  value,
-  onChange,
-  className,
-}: FluidDropdownProps) {
+export function FluidDropdown({ options, placeholder, value, onChange, className }: {
+  options: DropdownOption[]; placeholder: string; value: string | null;
+  onChange: (v: string) => void; className?: string;
+}) {
   const [isOpen, setIsOpen] = React.useState(false);
   const [hovered, setHovered] = React.useState<string | null>(null);
-  const dropdownRef = React.useRef<HTMLDivElement>(null);
-
-  useClickAway(dropdownRef as React.RefObject<HTMLElement>, () =>
-    setIsOpen(false)
-  );
-
-  const selectedOption = options.find((o) => o.id === value);
-
-  const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === "Escape") setIsOpen(false);
-  };
+  const ref = React.useRef<HTMLDivElement>(null);
+  useClickAway(ref as React.RefObject<HTMLElement>, () => setIsOpen(false));
+  const selected = options.find(o => o.id === value);
 
   return (
     <MotionConfig reducedMotion="user">
-      <div className={cn("relative w-full", className)} ref={dropdownRef}>
-        <button
-          type="button"
-          onClick={() => setIsOpen(!isOpen)}
+      <div className={cn("relative w-full", className)} ref={ref}>
+        <button type="button" onClick={() => setIsOpen(!isOpen)}
           className={cn(
-            "w-full flex items-center justify-between rounded-lg border border-border bg-muted px-4 py-3",
-            "text-sm font-body text-foreground/90",
-            "transition-colors duration-200",
-            "hover:border-primary/60",
-            isOpen && "border-primary bg-card rounded-b-none"
+            "w-full flex items-center justify-between rounded-input border px-4 py-3",
+            "text-body-sm font-body text-white transition-colors duration-150 ease-out",
+            "bg-black border-graphite-hairline",
+            isOpen && "border-white rounded-b-none"
           )}
-          aria-expanded={isOpen}
-          aria-haspopup="listbox"
-        >
-          <span className={cn(!selectedOption && "text-muted-foreground")}>
-            {selectedOption ? selectedOption.label : placeholder}
-          </span>
-          <motion.span
-            animate={{ rotate: isOpen ? 180 : 0 }}
-            transition={{ duration: 0.2 }}
-            className="flex items-center justify-center w-4 h-4 text-muted-foreground flex-shrink-0"
-          >
+          aria-expanded={isOpen}>
+          <span className={cn(!selected && "text-charcoal")}>{selected ? selected.label : placeholder}</span>
+          <motion.span animate={{ rotate: isOpen ? 180 : 0 }} transition={{ duration: 0.15 }} className="w-4 h-4 text-charcoal flex-shrink-0">
             <ChevronDown className="w-4 h-4" />
           </motion.span>
         </button>
@@ -105,55 +50,27 @@ export function FluidDropdown({
         <AnimatePresence>
           {isOpen && (
             <motion.div
-              initial={{ opacity: 1, height: 0 }}
-              animate={{
-                opacity: 1,
-                height: "auto",
-                transition: { type: "spring", stiffness: 500, damping: 32, mass: 1 },
-              }}
-              exit={{
-                opacity: 0,
-                height: 0,
-                transition: { type: "spring", stiffness: 500, damping: 32, mass: 1 },
-              }}
+              initial={{ opacity: 1, height: 0 }} animate={{ opacity: 1, height: "auto", transition: { duration: 0.15, ease: "easeOut" } }}
+              exit={{ opacity: 0, height: 0, transition: { duration: 0.15, ease: "easeOut" } }}
               className="absolute left-0 right-0 top-full z-50 overflow-hidden"
-              onKeyDown={handleKeyDown}
             >
-              <motion.div
-                className="w-full rounded-b-lg border border-t-0 border-primary bg-card p-1 shadow-lg"
-                style={{ transformOrigin: "top" }}
-              >
-                <motion.div
-                  className="py-1.5"
-                  variants={containerVariants}
-                  initial="hidden"
-                  animate="visible"
-                >
-                  {options.map((option) => (
-                    <motion.button
-                      key={option.id}
-                      type="button"
-                      onClick={() => {
-                        onChange(option.id);
-                        setIsOpen(false);
-                      }}
-                      onHoverStart={() => setHovered(option.id)}
-                      onHoverEnd={() => setHovered(null)}
+              <div className="w-full rounded-b-input border border-t-0 border-white bg-black p-1">
+                <motion.div className="py-1" initial="hidden" animate="visible"
+                  variants={{ visible: { transition: { staggerChildren: 0.03 } } }}>
+                  {options.map(opt => (
+                    <motion.button key={opt.id} type="button" variants={itemVariants}
+                      onClick={() => { onChange(opt.id); setIsOpen(false); }}
+                      onHoverStart={() => setHovered(opt.id)} onHoverEnd={() => setHovered(null)}
                       className={cn(
-                        "relative flex w-full items-center rounded-md px-4 py-2.5 text-sm font-body text-left",
-                        "transition-colors duration-150 focus:outline-none",
-                        value === option.id || hovered === option.id
-                          ? "text-foreground bg-white/[0.06]"
-                          : "text-muted-foreground"
+                        "flex w-full items-center rounded-[6px] px-4 py-2.5 text-body-sm font-body text-left transition-colors duration-150 focus:outline-none",
+                        (value === opt.id || hovered === opt.id) ? "text-iris-violet" : "text-ash-gray"
                       )}
-                      whileTap={{ scale: 0.98 }}
-                      variants={itemVariants}
-                    >
-                      {option.label}
+                      whileTap={{ scale: 0.98 }}>
+                      {opt.label}
                     </motion.button>
                   ))}
                 </motion.div>
-              </motion.div>
+              </div>
             </motion.div>
           )}
         </AnimatePresence>
