@@ -52,7 +52,7 @@ Add these Render environment variables:
 ```env
 GROQ_API_KEY=your_groq_api_key
 GROQ_MODEL=llama-3.1-8b-instant
-FRONTEND_ORIGINS=http://localhost:3000,https://your-vercel-app.vercel.app
+FRONTEND_ORIGINS=http://localhost:3000,https://xenrex-ai.vercel.app
 ```
 
 After deployment, verify:

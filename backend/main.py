@@ -15,7 +15,10 @@ app.add_middleware(
     CORSMiddleware,
     allow_origins=[
         origin.strip()
-        for origin in os.getenv("FRONTEND_ORIGINS", "http://localhost:3000").split(",")
+        for origin in os.getenv(
+            "FRONTEND_ORIGINS",
+            "http://localhost:3000,https://xenrex-ai.vercel.app",
+        ).split(",")
         if origin.strip()
     ],
     allow_credentials=True,
