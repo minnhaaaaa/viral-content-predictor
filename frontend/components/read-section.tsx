@@ -103,7 +103,7 @@ export function XenrexReadSection() {
               </h3>
               <p className="font-body text-body-sm text-ash-gray leading-relaxed">
                 XenrexAI models attention, arousal, emotional arc, and platform
-                compliance — giving you a concrete roadmap to fix your edit
+                compliance. Giving you a concrete roadmap to fix your edit
                 before it goes live.
               </p>
               <Link

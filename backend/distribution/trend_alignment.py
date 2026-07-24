@@ -4,6 +4,9 @@ import time
 import spacy
 from functools import lru_cache
 
+_trend_cache = {}
+CACHE_TTL_SECONDS = 3600
+
 @lru_cache(maxsize=1)
 def get_nlp_model():
     return spacy.load("en_core_web_sm")
@@ -39,35 +42,47 @@ def extract_topic_keywords(transcript: str, caption: str = "", max_keywords: int
 
     return candidates[:max_keywords]
 
-def get_trend_slope(keyword: str, timeframe: str = "now 7-d") -> dict:
-    """
-    Queries Google Trends for a single keyword's search interest over the
-    last 7 days and fits a linear slope through it.
-    Rising slope = trending up. Flat or negative = not trending.
-    Returns raw slope and the time series for debugging/display.
-    """
-    try:
-        pytrends = TrendReq(hl='en-US', tz=360)
-        pytrends.build_payload([keyword], cat=0, timeframe=timeframe, geo='', gprop='')
-        data = pytrends.interest_over_time()
+def get_trend_slope(keyword: str, timeframe: str = "now 7-d", max_retries: int = 1) -> dict:
+    cache_key = f"{keyword}:{timeframe}"
+    now = time.time()
 
-        if data.empty or keyword not in data.columns:
-            return {"keyword": keyword, "slope": 0.0, "series": [], "error": None}
+    if cache_key in _trend_cache:
+        cached_result, cached_time = _trend_cache[cache_key]
+        if now - cached_time < CACHE_TTL_SECONDS:
+            return cached_result
 
-        series = data[keyword].tolist()
+    last_error = None
+    for attempt in range(max_retries + 1):
+        try:
+            pytrends = TrendReq(hl='en-US', tz=360)
+            pytrends.build_payload([keyword], cat=0, timeframe=timeframe, geo='', gprop='')
+            data = pytrends.interest_over_time()
 
-        if len(series) < 2:
-            return {"keyword": keyword, "slope": 0.0, "series": series, "error": None}
+            if data.empty or keyword not in data.columns:
+                result = {"keyword": keyword, "slope": 0.0, "series": [], "error": None}
+            else:
+                series = data[keyword].tolist()
+                if len(series) < 2:
+                    result = {"keyword": keyword, "slope": 0.0, "series": series, "error": None}
+                else:
+                    x = np.arange(len(series))
+                    y = np.array(series)
+                    slope, _ = np.polyfit(x, y, 1)
+                    result = {"keyword": keyword, "slope": float(slope), "series": series, "error": None}
 
-        x = np.arange(len(series))
-        y = np.array(series)
-        slope, _ = np.polyfit(x, y, 1)
+            _trend_cache[cache_key] = (result, now)
+            return result
 
-        return {"keyword": keyword, "slope": float(slope), "series": series, "error": None}
+        except Exception as e:
+            last_error = str(e)
+            if "429" in last_error and attempt < max_retries:
+                wait_time = (attempt + 1) * 5  # 5s, then 10s
+                print(f"Rate limited on '{keyword}', retrying in {wait_time}s...")
+                time.sleep(wait_time)
+                continue
+            break
 
-    except Exception as e:
-        return {"keyword": keyword, "slope": 0.0, "series": [], "error": str(e)}
-
+    return {"keyword": keyword, "slope": 0.0, "series": [], "error": last_error}
 
 def score_trend_alignment(
     keywords: list,
@@ -75,15 +90,8 @@ def score_trend_alignment(
     caption: str = "",
     delay_between_queries: float = 1.0
 ) -> dict:
-    """
-    Queries Google Trends for creator-provided keywords AND auto-extracted
-    topic keywords from the transcript/caption. Scores based on both the
-    trend's slope (is it rising) and its absolute interest level (is it
-    already significant), since a topic rising from 0->5 is a much weaker
-    signal than one rising from 40->70.
-    """
     auto_keywords = extract_topic_keywords(transcript, caption)
-    all_keywords = list(dict.fromkeys(keywords + auto_keywords))  # dedupe, preserve order
+    all_keywords = list(dict.fromkeys(keywords + auto_keywords))
 
     if not all_keywords:
         return {
@@ -104,24 +112,32 @@ def score_trend_alignment(
     valid_results = [r for r in results if r["error"] is None]
 
     if not valid_results:
+        rate_limited = any(r["error"] and "429" in r["error"] for r in results)
+
+        if rate_limited:
+            return {
+                "score": 5.0,  # neutral midpoint — not a real signal either way
+                "best_keyword": None,
+                "keyword_results": results,
+                "auto_extracted": auto_keywords,
+                "reason": "Trend data temporarily unavailable due to Google Trends rate limiting — score defaulted to neutral rather than treating this as a flat/declining trend."
+            }
+
         return {
             "score": 0.0,
             "best_keyword": None,
             "keyword_results": results,
             "auto_extracted": auto_keywords,
-            "reason": "All keyword queries failed — Google Trends may be rate limiting or unreachable."
+            "reason": "All keyword queries failed — Google Trends may be unreachable."
         }
 
-    # Score each result combining slope (trend direction) and average level (significance)
     def combined_score(r):
         avg_level = float(np.mean(r["series"])) if r["series"] else 0.0
-        # Slope contributes direction, level contributes magnitude of relevance
-        return (r["slope"] * 0.7) + (avg_level * 0.05)  # level scaled down, it's 0-100 range
+        return (r["slope"] * 0.7) + (avg_level * 0.05)
 
     best = max(valid_results, key=combined_score)
     best_avg_level = float(np.mean(best["series"])) if best["series"] else 0.0
 
-    # Normalise combined score to 0-10
     raw_combined = combined_score(best)
     normalized_score = max(0.0, min(10.0, 5.0 + (raw_combined / 3.0)))
 

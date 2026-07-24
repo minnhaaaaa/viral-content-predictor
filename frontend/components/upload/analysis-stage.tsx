@@ -38,6 +38,12 @@ function AnalysisScreen({ file }: { file: File; formData: AnalysisFormData }) {
   const [status, setStatus] = useState("Connecting to XenrexAI…");
   const [logs, setLogs] = useState<LogLine[]>([]);
   const [timeReadout, setTimeReadout] = useState("00:00 / 00:00");
+  // Once the ambient log script runs out (~14.6s) we have no more real
+  // signal to show, so we switch from a determinate fill to an honest
+  // indeterminate sweep rather than freezing at a fixed percentage —
+  // that "stuck bar" was the actual bug when the backend took longer
+  // than the scripted log timeline.
+  const [longRunning, setLongRunning] = useState(false);
   const logFeedRef = useRef<HTMLDivElement>(null);
   const idRef = useRef(0);
 
@@ -50,6 +56,10 @@ function AnalysisScreen({ file }: { file: File; formData: AnalysisFormData }) {
         setLogs(prev => [...prev, { id: idRef.current, msg, type, ts: nowTs() }]);
       }, t * 1000));
     });
+    // Switch to indeterminate mode right after the last scripted log line,
+    // so the bar never sits frozen once we run out of things to say.
+    const lastLogTime = AMBIENT_LOGS[AMBIENT_LOGS.length - 1].t;
+    timers.push(setTimeout(() => setLongRunning(true), (lastLogTime + 1) * 1000));
     return () => timers.forEach(clearTimeout);
   }, []);
 
@@ -97,13 +107,29 @@ function AnalysisScreen({ file }: { file: File; formData: AnalysisFormData }) {
             <p className="font-mono text-sm text-[#9281f7]">{status}</p>
           </div>
 
-          <div className="w-full h-1 bg-[#292d30] rounded-full overflow-hidden">
-            <motion.div
-              className="h-full rounded-full bg-[#9281f7]"
-              initial={{ width: "0%" }} animate={{ width: "90%" }}
-              transition={{ duration: 20, ease: "easeInOut" }}
-              style={{ boxShadow: "0 0 8px rgba(146,129,247,0.5)" }}
-            />
+          <div className="w-full h-1 bg-[#292d30] rounded-full overflow-hidden relative">
+            {!longRunning ? (
+              // Determinate phase: fills alongside the scripted log
+              // timeline, matching what's actually happening on screen.
+              <motion.div
+                className="h-full rounded-full bg-[#9281f7]"
+                initial={{ width: "0%" }} animate={{ width: "88%" }}
+                transition={{ duration: (AMBIENT_LOGS[AMBIENT_LOGS.length - 1].t + 1), ease: "easeInOut" }}
+                style={{ boxShadow: "0 0 8px rgba(146,129,247,0.5)" }}
+              />
+            ) : (
+              // Indeterminate phase: we genuinely don't know real progress
+              // once the backend runs longer than the log script, so this
+              // shows continuous motion (a sweeping bar) instead of a
+              // number that would be a lie — this is what fixes the
+              // "stuck at 90%" bug.
+              <motion.div
+                className="h-full w-1/3 rounded-full bg-[#9281f7] absolute"
+                animate={{ left: ["-33%", "100%"] }}
+                transition={{ duration: 1.3, repeat: Infinity, ease: "easeInOut" }}
+                style={{ boxShadow: "0 0 8px rgba(146,129,247,0.5)" }}
+              />
+            )}
           </div>
 
           <div ref={logFeedRef} className="flex-1 font-mono text-[0.75rem] flex flex-col gap-1.5 overflow-y-auto min-h-[200px] py-1">
@@ -114,6 +140,11 @@ function AnalysisScreen({ file }: { file: File; formData: AnalysisFormData }) {
               </motion.div>
             ))}
             {logs.length === 0 && <p className="text-[#464a4d] font-mono text-xs">Waiting for backend response…</p>}
+            {longRunning && (
+              <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-[#ff9592] font-mono text-xs mt-1">
+                Taking longer than usual — the backend is still working, hang tight…
+              </motion.p>
+            )}
           </div>
         </div>
       </div>

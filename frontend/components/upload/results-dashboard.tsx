@@ -19,6 +19,24 @@ const CARD =
   "relative overflow-hidden rounded-card bg-black border border-graphite-hairline " +
   "shadow-card transition-shadow duration-150 ease-out hover:shadow-card-hover";
 
+/* ─── MARKDOWN-BOLD PARSER ────────────────────────────────────────
+   The backend's LLM-generated fields (ai_summary, hook_iterations)
+   sometimes include literal markdown bold syntax like **Emotional Arc**.
+   Since these are rendered as plain JSX text, "**" was showing up
+   literally instead of turning bold. This splits on **...** pairs and
+   renders the wrapped portions as <strong>, leaving everything else as
+   plain text — works regardless of whether the backend sends markdown
+   or plain prose, so it's safe either way. */
+function renderMarkdownBold(text: string): React.ReactNode {
+  const parts = text.split(/(\*\*[^*]+\*\*)/g);
+  return parts.map((part, i) => {
+    if (part.startsWith("**") && part.endsWith("**") && part.length > 4) {
+      return <strong key={i} className="font-semibold text-white">{part.slice(2, -2)}</strong>;
+    }
+    return <React.Fragment key={i}>{part}</React.Fragment>;
+  });
+}
+
 const CARD_H = "h-[220px]";
 const CARD_PAD = "p-8";
 
@@ -144,7 +162,7 @@ function Card({ children, className = "", delay = 0 }: { children: React.ReactNo
 }
 
 /* ─── S1 — COMPOSITE SCORE ────────────────────────────────────── */
-function CompositeScore({ score }: { score: number }) {
+function CompositeScore({ score, layerScores }: { score: number; layerScores: AnalysisResult["layer_scores"] }) {
   const triggerRef = useRef<HTMLDivElement>(null);
   const numRef = useRef<HTMLSpanElement>(null);
   const done = useRef(false);
@@ -175,6 +193,17 @@ function CompositeScore({ score }: { score: number }) {
 
   const grade = score >= 90 ? "A" : score >= 80 ? "B+" : score >= 70 ? "B" : score >= 60 ? "C+" : "C";
 
+  // Same four layers shown in full detail further down in Layer Analysis —
+  // this quick-stat list used to be hardcoded mock numbers (88/79/91/52)
+  // that never matched the real per-video scores, which is what produced
+  // the inconsistency between this section and Layer Analysis below.
+  const quickStats: { label: string; val: number }[] = [
+    { label: "Neural Visual",       val: layerScores.neural_visual },
+    { label: "Neural Audio",        val: layerScores.neural_audio },
+    { label: "Emotional Arc",       val: layerScores.emotional_arc },
+    { label: "Platform Compliance", val: layerScores.platform_compliance },
+  ];
+
   return (
     <Reveal className="py-20 border-b border-[#292d30]">
       <div className="flex flex-col items-center text-center">
@@ -200,23 +229,17 @@ function CompositeScore({ score }: { score: number }) {
         </div>
 
         <div className="flex flex-col items-center gap-3 mb-10 w-full max-w-sm">
-          {[
-            { label: "Neural Visual",       val: 88, good: true },
-            { label: "Neural Audio",        val: 79, good: true },
-            { label: "Emotional Arc",       val: 91, good: true },
-            { label: "Platform Compliance", val: 52, good: false },
-          ].map(s => (
-            <div key={s.label} className="flex items-center gap-4 w-full">
-              <span className={`w-2 h-2 rounded-full flex-shrink-0 ${s.good ? "bg-[#9281f7]" : "bg-[#ff9592]"}`} />
-              <span className="font-mono text-xs text-[#a1a4a5] flex-1 text-left">{s.label}</span>
-              <span className={`font-display font-bold text-lg ${s.good ? "text-[#9281f7]" : "text-[#ff9592]"}`}>{s.val}</span>
-            </div>
-          ))}
+          {quickStats.map(s => {
+            const good = s.val >= 60;
+            return (
+              <div key={s.label} className="flex items-center gap-4 w-full">
+                <span className={`w-2 h-2 rounded-full flex-shrink-0 ${good ? "bg-[#9281f7]" : "bg-[#ff9592]"}`} />
+                <span className="font-mono text-xs text-[#a1a4a5] flex-1 text-left">{s.label}</span>
+                <span className={`font-display font-bold text-lg ${good ? "text-[#9281f7]" : "text-[#ff9592]"}`}>{s.val}</span>
+              </div>
+            );
+          })}
         </div>
-
-        <p className="font-mono text-sm max-w-[48ch] leading-relaxed text-[#a1a4a5]">
-          Strong video with a clear emotional arc. Platform compliance is the main drag — fix that and this becomes a top&#8209;10% post.
-        </p>
       </div>
     </Reveal>
   );
@@ -238,7 +261,7 @@ function AiSummary({ text }: { text: string }) {
             </svg>
           </div>
           <p className="font-mono text-sm leading-relaxed text-[#ffffff]/90">
-            {text}
+            {renderMarkdownBold(text)}
           </p>
         </div>
       </div>
@@ -259,9 +282,9 @@ function HookIterations({ items }: { items: { strategy: string; suggestion: stri
           <Card key={item.strategy} delay={i * 0.08} className="h-auto">
             <div>
               <span className="font-mono text-xs px-2.5 py-1 rounded-full uppercase tracking-wider inline-block mb-3" style={{ background: "rgba(146,129,247,0.14)", color: "#9281f7" }}>
-                {item.strategy}
+                {renderMarkdownBold(item.strategy)}
               </span>
-              <p className="text-[#ffffff]/85 text-sm font-body leading-relaxed">{item.suggestion}</p>
+              <p className="text-[#ffffff]/85 text-sm font-body leading-relaxed">{renderMarkdownBold(item.suggestion)}</p>
             </div>
           </Card>
         ))}
@@ -508,7 +531,7 @@ function Distribution({ data }: { data: AnalysisResult["distribution"] }) {
 export function ResultsDashboard({ result, onRescan }: { result: AnalysisResult; onRescan: () => void }) {
   return (
     <div className="max-w-[900px] mx-auto w-full px-5 md:px-0">
-      <CompositeScore score={result.composite_score} />
+      <CompositeScore score={result.composite_score} layerScores={result.layer_scores} />
       <AiSummary text={result.ai_summary} />
       <PlatformScores scores={result.platform_scores} />
       <HookScore scores={result.hook_score} />

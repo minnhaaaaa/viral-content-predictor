@@ -62,7 +62,7 @@ export function TextScrambleHover({ text, className = "", autoPlay = false, onCo
           <span
             key={i}
             className={`inline-block transition-all duration-150 ${
-              isScrambling && char !== text[i] ? "text-primary scale-110" : "text-foreground"
+              isScrambling && char !== text[i] ? "text-[#9281f7] scale-110" : "text-foreground"
             }`}
             style={{ transitionDelay: `${i * 10}ms` }}
           >
@@ -74,7 +74,7 @@ export function TextScrambleHover({ text, className = "", autoPlay = false, onCo
         <span className={`absolute inset-0 bg-foreground transition-transform duration-500 ease-out origin-left ${isHovering ? "scale-x-100" : "scale-x-0"}`} />
         <span className="absolute inset-0 bg-border" />
       </span>
-      <span className={`absolute -inset-4 rounded-lg bg-primary/5 transition-opacity duration-300 -z-10 ${isHovering ? "opacity-100" : "opacity-0"}`} />
+      <span className={`absolute -inset-4 rounded-lg bg-[#9281f7]/5 transition-opacity duration-300 -z-10 ${isHovering ? "opacity-100" : "opacity-0"}`} />
     </div>
   )
 }
