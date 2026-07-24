@@ -1,0 +1,13 @@
+services:
+  - type: web
+    name: viral-content-predictor-api
+    runtime: docker
+    plan: free
+    healthCheckPath: /health
+    envVars:
+      - key: GROQ_MODEL
+        value: llama-3.1-8b-instant
+      - key: FRONTEND_ORIGINS
+        value: http://localhost:3000
+      - key: GROQ_API_KEY
+        sync: false

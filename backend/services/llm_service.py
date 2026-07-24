@@ -1,31 +1,39 @@
-import requests
-import json
+import os
 
-OLLAMA_URL = "http://localhost:11434/api/generate"
-MODEL_NAME = "llama3.2:3b"
+from groq import Groq
 
 
-def call_ollama(prompt: str, max_tokens: int = 300) -> str:
+GROQ_MODEL = os.getenv("GROQ_MODEL", "llama-3.1-8b-instant")
+
+
+def call_llm(prompt: str, max_tokens: int = 300) -> str:
     """
-    Sends a prompt to a locally running Ollama instance.
-    Returns the generated text. Falls back to empty string on any failure
-    so the LLM layer can never break the rest of the pipeline.
+    Sends a prompt to Groq's hosted API.
+    Falls back to an empty string on any failure so the LLM layer can never
+    break the rest of the analysis pipeline.
     """
+    api_key = os.getenv("GROQ_API_KEY")
+    if not api_key:
+        print("Groq call skipped: GROQ_API_KEY is not set.")
+        return ""
+
     try:
-        response = requests.post(
-            OLLAMA_URL,
-            json={
-                "model": MODEL_NAME,
-                "prompt": prompt,
-                "stream": False,
-                "options": {"num_predict": max_tokens}
-            },
-            timeout=30
+        client = Groq(api_key=api_key)
+        response = client.chat.completions.create(
+            model=GROQ_MODEL,
+            messages=[
+                {
+                    "role": "system",
+                    "content": "You are a direct, specific short-form video strategist.",
+                },
+                {"role": "user", "content": prompt},
+            ],
+            max_tokens=max_tokens,
+            temperature=0.7,
         )
-        response.raise_for_status()
-        return response.json().get("response", "").strip()
+        return response.choices[0].message.content.strip()
     except Exception as e:
-        print(f"Ollama call failed: {e}")
+        print(f"Groq call failed: {e}")
         return ""
 
 
@@ -43,7 +51,7 @@ Number of drift points detected: {len(analysis_data['drift_timestamps'])}
 
 Summary:"""
 
-    result = call_ollama(prompt, max_tokens=200)
+    result = call_llm(prompt, max_tokens=200)
     return result if result else "Summary generation unavailable — LLM service not reachable."
 
 
@@ -67,7 +75,7 @@ Suggest exactly 3 alternative opening hook lines or concepts for this video's fi
 2. [Strategy name]: [specific suggestion]
 3. [Strategy name]: [specific suggestion]"""
 
-    result = call_ollama(prompt, max_tokens=300)
+    result = call_llm(prompt, max_tokens=300)
 
     if not result:
         return []

@@ -1,0 +1,13 @@
+.git
+.agents
+.codex
+frontend/node_modules
+frontend/.next
+frontend/out
+__pycache__
+*.pyc
+.pytest_cache
+.venv
+myenv
+temp_uploads
+tests/sample_uploads

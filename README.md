@@ -35,3 +35,42 @@ Install ffmpeg before running the project as required by Whisper:
 - Ubuntu/Debian: `sudo apt install ffmpeg`
 - Mac: `brew install ffmpeg`
 - Windows: `https://ffmpeg.org/download.html`
+
+## Backend Deployment: Render Docker + Groq
+
+The backend is configured for Render using the root `Dockerfile` and `render.yaml`.
+
+Create a new Render Web Service with:
+
+- Runtime: Docker
+- Root directory: repository root
+- Health check path: `/health`
+- Plan: Free for testing
+
+Add these Render environment variables:
+
+```env
+GROQ_API_KEY=your_groq_api_key
+GROQ_MODEL=llama-3.1-8b-instant
+FRONTEND_ORIGINS=http://localhost:3000,https://your-vercel-app.vercel.app
+```
+
+After deployment, verify:
+
+```text
+https://<your-render-service>.onrender.com/health
+```
+
+Expected response:
+
+```json
+{"status":"ok"}
+```
+
+The frontend should call the deployed backend with:
+
+```env
+NEXT_PUBLIC_API_URL=https://<your-render-service>.onrender.com
+```
+
+Render free web services spin down after inactivity and have an ephemeral filesystem. This backend only stores uploaded videos temporarily during a request, so the ephemeral filesystem is acceptable for testing.
