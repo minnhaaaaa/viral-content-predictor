@@ -3,7 +3,6 @@ import os
 from backend.api.routes import router
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from backend.services.llm_service import call_llm
 
 app = FastAPI(
     title="Viral Content Predictor",
@@ -39,8 +38,13 @@ async def warm_up_llm():
     show whether Groq is configured before the first analysis request.
     """
     print("Warming up LLM model...")
-    result = call_llm("Say hello.", max_tokens=10)
-    if result:
-        print("LLM warm-up successful.")
-    else:
-        print("LLM warm-up failed — Groq may not be configured/reachable. Continuing without it.")
+    try:
+        from backend.services.llm_service import call_llm
+
+        result = call_llm("Say hello.", max_tokens=10)
+        if result:
+            print("LLM warm-up successful.")
+        else:
+            print("LLM warm-up failed — Groq may not be configured/reachable. Continuing without it.")
+    except Exception as exc:
+        print(f"LLM warm-up skipped: {exc}")

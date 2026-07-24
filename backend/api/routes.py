@@ -3,7 +3,6 @@ import shutil
 import uuid
 
 from backend.schemas.response import AnalysisResponse
-from backend.services.analysis_service import run_analysis
 from fastapi import APIRouter, File, Form, HTTPException, UploadFile
 from backend.utils.location_search import search_locations
 router = APIRouter()
@@ -55,6 +54,8 @@ async def analyse_video(
         f.write(contents)
 
     try:
+        from backend.services.analysis_service import run_analysis
+
         keyword_list = [k.strip() for k in keywords.split(",") if k.strip()]
 
         result = run_analysis(
