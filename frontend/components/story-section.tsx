@@ -88,7 +88,7 @@ export function StorySection() {
     {
       label: "03 The product",
       heading: "XenrexAI reads it.",
-      body: "Drop your edit. Within seconds you get an attention curve, a composite score, platform-specific hook grades, and a plain-English fix list before you ever hit publish.",
+      body: "Drop your edit. Within seconds you get an attention curve, a composite score, platform specific hook grades, and a plain English fix list before you ever hit publish.",
       pills: [
         { label: "04 passes",   desc: "Visual → Audio → Attention model → Verdict." },
         { label: "7 signals",   desc: "Every metric a neuroscientist uses to study focus." },
@@ -98,7 +98,7 @@ export function StorySection() {
     {
       label: "04 The result",
       heading: "Stop guessing.",
-      body: "Creators who scan before publishing fix the drop-off points that kill retention. The edit at 40% completion becomes 64%. The difference is knowing where to look.",
+      body: "Creators who scan before publishing fix the drop off points that kill retention. The edit at 40% completion becomes 64%. The difference is knowing where to look.",
     },
   ];
 
