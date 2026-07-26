@@ -71,24 +71,24 @@ function StorySlide({ label, heading, body, pills }: SlideProps) {
 export function StorySection() {
   const SLIDES: SlideProps[] = [
     {
-      label: "01 — The problem",
+      label: "01 The problem",
       heading: "You publish and hope.",
-      body: "Every creator hits publish without knowing how their audience's brain will actually respond. No data. No preview. Just guesswork — and a view count two days later.",
+      body: "Every creator hits publish without knowing how their audience's brain will actually respond. No data. No preview. Just guesswork and a view count two days later.",
     },
     {
-      label: "02 — The science",
+      label: "02 The science",
       heading: "Brains are predictable.",
       body: "Neuroscientists have mapped how attention rises and collapses in response to motion, faces, pacing, and emotional arc. The signals are real. The patterns are measurable.",
       pills: [
-        { label: "Visual Cortex", desc: "Frame saliency, luminance shock, motion energy — scored per frame." },
-        { label: "Neural Audio",  desc: "BPM sync, voice prosody, spectral surprise index — per second." },
+        { label: "Visual Cortex", desc: "Frame saliency, luminance shock, and motion energy scored per frame." },
+        { label: "Neural Audio",  desc: "BPM sync, voice prosody, and spectral surprise index per second." },
         { label: "Emotional Arc", desc: "Valence trajectory modelled to predict when viewers feel, then leave." },
       ],
     },
     {
-      label: "03 — The product",
+      label: "03 The product",
       heading: "XenrexAI reads it.",
-      body: "Drop your edit. Within seconds you get an attention curve, a composite score, platform-specific hook grades, and a plain-English fix list — before you ever hit publish.",
+      body: "Drop your edit. Within seconds you get an attention curve, a composite score, platform-specific hook grades, and a plain-English fix list before you ever hit publish.",
       pills: [
         { label: "04 passes",   desc: "Visual → Audio → Attention model → Verdict." },
         { label: "7 signals",   desc: "Every metric a neuroscientist uses to study focus." },
@@ -96,7 +96,7 @@ export function StorySection() {
       ],
     },
     {
-      label: "04 — The result",
+      label: "04 The result",
       heading: "Stop guessing.",
       body: "Creators who scan before publishing fix the drop-off points that kill retention. The edit at 40% completion becomes 64%. The difference is knowing where to look.",
     },

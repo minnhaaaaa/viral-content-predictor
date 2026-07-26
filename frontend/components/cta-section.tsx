@@ -13,7 +13,7 @@ export function CTASection() {
             Stop guessing.<br />Start reading.
           </h2>
           <p className="text-ash-gray text-body max-w-[40ch] mx-auto mb-10">
-            Run your next edit through XenrexAI before you publish — and see your video the way your audience&apos;s brain will.
+            Run your next edit through XenrexAI before you publish and see your video the way your audience&apos;s brain will.
           </p>
           {/* Only filled-color action on the page: Signal Blue, per Resend's
               spec ("filled action" is the sole exception to ghost buttons) */}

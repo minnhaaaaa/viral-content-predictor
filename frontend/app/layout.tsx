@@ -2,9 +2,9 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "XenrexAI — Analyse your video, the way a neuroscientist would",
+  title: "XenrexAI | Analyse your video, the way a neuroscientist would",
   description:
-    "XenrexAI analyses your video the same way a neuroscientist would — mapping attention, arousal, and hook strength frame by frame, before you ever hit publish.",
+    "XenrexAI analyses your video the same way a neuroscientist would, mapping attention, arousal, and hook strength frame by frame, before you ever hit publish.",
 };
 
 export default function RootLayout({

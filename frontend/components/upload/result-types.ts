@@ -74,7 +74,7 @@ export const MOCK_RESULT: AnalysisResult = {
     multiplier: 1.27,
     posting_time_recommendation: "Post between 7:00 PM and 10:00 PM GST",
   },
-  ai_summary: "This video scores 84/100, driven largely by a strong emotional arc (91) and solid visual hook. The weakest area is platform compliance (52) — the aspect ratio isn't fully optimized for vertical feeds. Fixing the crop before posting is the single highest-impact change available.",
+  ai_summary: "This video scores 84/100, driven largely by a strong emotional arc (91) and solid visual hook. The weakest area is platform compliance (52). The aspect ratio isn't fully optimized for vertical feeds. Fixing the crop before posting is the single highest-impact change available.",
   hook_iterations: [
     { strategy: "Curiosity gap",    suggestion: "Open on the finished result before showing how you got there." },
     { strategy: "Direct address",   suggestion: "Start with 'If you've ever struggled with X, watch this.'" },

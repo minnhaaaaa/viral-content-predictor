@@ -22,15 +22,16 @@ function nowTs() {
 interface LogLine { id: number; msg: string; type: "normal" | "good" | "flag"; ts: string }
 
 const AMBIENT_LOGS: { t: number; msg: string; type: "status" | "normal" | "flag" }[] = [
-  { t: 0.4,  msg: "Calibrating frame buffer…",                     type: "status" },
-  { t: 1.2,  msg: "Visual cortex pass — motion & composition",     type: "normal" },
-  { t: 2.6,  msg: "Scanning for faces and gaze pull…",             type: "normal" },
-  { t: 4.0,  msg: "Mapping arousal curve from pacing & audio",     type: "normal" },
-  { t: 5.8,  msg: "Voice prosody and BPM sync calculated",         type: "normal" },
-  { t: 7.5,  msg: "Cross-referencing trend data & account health", type: "normal" },
-  { t: 9.2,  msg: "Fusing all signals into final read…",           type: "normal" },
-  { t: 11.0, msg: "Still processing — large file or cold start",   type: "flag"   },
-  { t: 14.0, msg: "Almost there…",                                  type: "normal" },
+  { t: 1.0,   msg: "Calibrating frame buffer…",                       type: "status" },
+  { t: 8.0,   msg: "Visual cortex pass scanning motion and composition", type: "normal" },
+  { t: 24.0,  msg: "Sampling frames for saliency and luminance shifts",  type: "normal" },
+  { t: 42.0,  msg: "Scanning for faces and gaze pull…",                 type: "normal" },
+  { t: 62.0,  msg: "Extracting audio and mapping arousal curve",        type: "normal" },
+  { t: 84.0,  msg: "Calculating voice prosody and BPM sync",            type: "normal" },
+  { t: 108.0, msg: "Cross-referencing trend data and account health",   type: "normal" },
+  { t: 132.0, msg: "Fusing all signals into final read…",               type: "normal" },
+  { t: 156.0, msg: "Still processing larger files or cold starts",      type: "flag"   },
+  { t: 174.0, msg: "Preparing final recommendations…",                  type: "normal" },
 ];
 
 function AnalysisScreen({ file }: { file: File; formData: AnalysisFormData }) {
@@ -126,7 +127,7 @@ function AnalysisScreen({ file }: { file: File; formData: AnalysisFormData }) {
               <motion.div
                 className="h-full w-1/3 rounded-full bg-[#9281f7] absolute"
                 animate={{ left: ["-33%", "100%"] }}
-                transition={{ duration: 1.3, repeat: Infinity, ease: "easeInOut" }}
+                transition={{ duration: 2.4, repeat: Infinity, ease: "easeInOut" }}
                 style={{ boxShadow: "0 0 8px rgba(146,129,247,0.5)" }}
               />
             )}
@@ -142,7 +143,7 @@ function AnalysisScreen({ file }: { file: File; formData: AnalysisFormData }) {
             {logs.length === 0 && <p className="text-[#464a4d] font-mono text-xs">Waiting for backend response…</p>}
             {longRunning && (
               <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-[#ff9592] font-mono text-xs mt-1">
-                Taking longer than usual — the backend is still working, hang tight…
+                Taking longer than usual. The backend is still working.
               </motion.p>
             )}
           </div>

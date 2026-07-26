@@ -4,11 +4,11 @@ import React from "react";
 import { TextReveal, FadeReveal } from "@/components/ui/text-reveal";
 
 const SIGNALS = [
-  { num: "01", title: "Hook window",        body: "The first 1–3 seconds scored for novelty, motion, and faces — the exact triggers that decide whether a thumb keeps scrolling." },
-  { num: "02", title: "Pacing rhythm",      body: "Cut frequency and shot length mapped against arousal to find where pacing matches the emotional beat — and where it fights it." },
+  { num: "01", title: "Hook window",        body: "The first 1–3 seconds scored for novelty, motion, and faces. These are the exact triggers that decide whether a thumb keeps scrolling." },
+  { num: "02", title: "Pacing rhythm",      body: "Cut frequency and shot length mapped against arousal to find where pacing matches the emotional beat and where it fights it." },
   { num: "03", title: "Face & gaze",        body: "Human faces and eye contact are the strongest attention magnets. XenrexAI tracks when they appear and when they disappear." },
-  { num: "04", title: "Emotional peaks",    body: "Moments of surprise, tension, humour and reward are flagged — the spikes that make a viewer's brain want to keep watching." },
-  { num: "05", title: "Drop-off risk",      body: "XenrexAI finds the seconds where attention is likely to collapse — flat pacing, repeated beats, dead air." },
+  { num: "04", title: "Emotional peaks",    body: "Moments of surprise, tension, humour and reward are flagged as the spikes that make a viewer's brain want to keep watching." },
+  { num: "05", title: "Drop-off risk",      body: "XenrexAI finds the seconds where attention is likely to collapse from flat pacing, repeated beats, or dead air." },
   { num: "06", title: "Retention forecast", body: "All signals combine into a predicted average watch time and completion rate, benchmarked against your platform and format." },
 ];
 
@@ -28,7 +28,7 @@ export function Signals() {
           />
           <FadeReveal delay={0.15}>
             <p className="mt-5 text-ash-gray text-body max-w-[40ch]">
-              Not vanity metrics. The same signals neuroscientists use to study attention — applied to your cut, before an audience ever sees it.
+              Not vanity metrics. The same signals neuroscientists use to study attention, applied to your cut before an audience ever sees it.
             </p>
           </FadeReveal>
         </div>

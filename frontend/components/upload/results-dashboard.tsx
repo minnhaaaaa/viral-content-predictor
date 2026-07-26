@@ -346,7 +346,7 @@ function HookScore({ scores }: { scores: AnalysisResult["hook_score"] }) {
               <div>
                 <span className="font-mono text-xs tracking-widest uppercase text-[#a1a4a5] block mb-1">{label}</span>
                 <p className="font-mono text-xs text-[#464a4d]">
-                  {val >= 85 ? "Strong — thumb-stopping open" : val >= 70 ? "Decent — room to tighten" : "Weak — rethink the first cut"}
+                  {val >= 85 ? "Strong thumb-stopping open" : val >= 70 ? "Decent with room to tighten" : "Weak. Rethink the first cut"}
                 </p>
               </div>
               <div>

@@ -34,16 +34,16 @@ export function ContextPanel({ data, update, onBack, onSubmit }: Props) {
   return (
     <div>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-5 mb-6">
-        <Field label="Content keywords" hint="Separate with commas — used to pull Google Trends slope" full>
+        <Field label="Content keywords" hint="Separate with commas. Used to pull Google Trends slope" full>
           <Input type="text" placeholder="e.g. gym motivation, HIIT workout, fitness tips" value={data.contentKeywords} onChange={e => update({ contentKeywords: e.target.value })} />
         </Field>
         <Field label="Content category">
           <FluidDropdown options={CATEGORY_OPTIONS} placeholder="Select a category" value={data.contentCategory} onChange={v => update({ contentCategory: v })} />
         </Field>
         <Field label="Audio track name (optional)" hint="Trending audio boosts distribution on TikTok & Reels">
-          <Input type="text" placeholder="e.g. Flowers — Miley Cyrus" value={data.audioTrack} onChange={e => update({ audioTrack: e.target.value })} />
+          <Input type="text" placeholder="e.g. Flowers by Miley Cyrus" value={data.audioTrack} onChange={e => update({ audioTrack: e.target.value })} />
         </Field>
-        <Field label="Target audience city" hint="We need a specific city, not just a country — posting time windows are timezone-aware" full>
+        <Field label="Target audience city" hint="We need a specific city, not just a country. Posting time windows are timezone-aware" full>
           <LocationAutocomplete value={data.location} onChange={loc => update({ location: loc })} />
         </Field>
         <Field label="Intended posting time" hint="Best windows: 6–9 am or 7–10 pm local">

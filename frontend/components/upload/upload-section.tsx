@@ -8,7 +8,7 @@ import { ContextPanel } from "./context-panel";
 import { AnalysisStage } from "./analysis-stage";
 import { AnalysisFormData } from "./types";
 
-const STEPS = ["01 — Upload", "02 — Account", "03 — Context"];
+const STEPS = ["01 Upload", "02 Account", "03 Context"];
 
 const initialFormData: AnalysisFormData = {
   followerCount: "", daysSinceUpload: "", avgViews: "",
