@@ -52,7 +52,7 @@ export function UploadSection() {
             className="font-heading font-normal text-[2rem] md:text-heading leading-[1.1] tracking-tight text-white"
           />
           <p className="mt-5 text-ash-gray text-body max-w-[40ch]">
-            MP4 or MOV up to 60 seconds. Your video plays back while the model maps every second beneath it.
+            Upload MP4 or MOV files up to 60 seconds in length.
           </p>
         </div>
 
