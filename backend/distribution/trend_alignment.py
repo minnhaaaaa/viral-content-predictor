@@ -9,7 +9,10 @@ CACHE_TTL_SECONDS = 3600
 
 @lru_cache(maxsize=1)
 def get_nlp_model():
-    return spacy.load("en_core_web_sm")
+    try:
+        return spacy.load("en_core_web_sm")
+    except OSError:
+        return spacy.blank("en")
 
 def extract_topic_keywords(transcript: str, caption: str = "", max_keywords: int = 5) -> list:
     """
@@ -25,17 +28,23 @@ def extract_topic_keywords(transcript: str, caption: str = "", max_keywords: int
     nlp = get_nlp_model()
     doc = nlp(combined_text)
 
-    # Extract noun phrases, filter out very short or very generic ones
     candidates = []
     seen = set()
 
-    for chunk in doc.noun_chunks:
+    if "parser" in nlp.pipe_names:
+        spans = doc.noun_chunks
+    else:
+        spans = (
+            token
+            for token in doc
+            if token.is_alpha and not token.is_stop and len(token.text) >= 3
+        )
+
+    for chunk in spans:
         phrase = chunk.text.strip().lower()
-        # Skip pronouns, single letter words, and duplicates
         if len(phrase) < 3 or phrase in seen:
             continue
-        # Skip phrases that are just stopwords
-        if all(token.is_stop for token in chunk):
+        if hasattr(chunk, "__iter__") and all(token.is_stop for token in chunk):
             continue
         seen.add(phrase)
         candidates.append(phrase)
